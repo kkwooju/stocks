@@ -2185,15 +2185,11 @@ async function refreshPrices() {
     return;
   }
 
-  // 사용 중인 외화 통화 집합 → 환율도 함께 갱신 (KRW 제외)
-  const currencyUse = new Set();
-  rowSymbols.forEach(rs => {
-    if (!rs.full) return;
-    const market = rs.row.querySelector('.market-select').value;
-    const cur = getMarket(market).currency;
-    if (cur && cur !== 'KRW') currencyUse.add(cur);
-  });
-  const currencies = Array.from(currencyUse);
+  // 환율은 MARKETS 카탈로그의 모든 외화 통화를 갱신 (보유 종목 유무와 무관)
+  // → 새 종목 추가 시 이미 최신 환율로 평가 가능
+  const currencies = Array.from(new Set(
+    MARKETS.map(m => m.currency).filter(c => c && c !== 'KRW')
+  ));
   const totalCalls = symbols.length + currencies.length;
 
   btn.disabled = true;
