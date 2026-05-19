@@ -89,26 +89,28 @@
   .bottom-nav {
     display: none; /* 데스크탑에선 숨김 */
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 12px rgba(15,23,42,0.05);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-top: 1px solid var(--border-strong);
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
     z-index: 90;
-    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    padding: 2px 0 calc(2px + env(safe-area-inset-bottom));
   }
   .bottom-nav .nav-btn {
     flex: 1; background: none; border: none; cursor: pointer;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 3px; padding: 6px 0;
+    gap: 1px; padding: 4px 0;
     color: var(--muted); font-size: 10px; font-weight: 600;
     transition: color 0.15s;
   }
-  .bottom-nav .nav-btn-icon { font-size: 20px; line-height: 1; }
+  .bottom-nav .nav-btn .ico { width: 18px; height: 18px; }
   .bottom-nav .nav-btn.active { color: var(--primary); }
-  .bottom-nav .nav-btn.active .nav-btn-icon { transform: scale(1.05); }
 
   @media (max-width: 600px) {
     .bottom-nav { display: flex; }
-    body { padding-bottom: 78px; }  /* 탭바 높이만큼 콘텐츠 여백 */
+    /* 탭바 높이(~52px) + safe-area 만큼 콘텐츠 여백 + 그림자 분리감을 위한 약간 추가 */
+    body { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
   }
 
   /* ==================== 사용 가이드 페이지 ==================== */
@@ -277,7 +279,8 @@
 
   /* 모바일 보강: 패딩 축소, 컨테이너 라운드 줄임, 표 셀 압축 */
   @media (max-width: 600px) {
-    body { padding: 12px 8px; }
+    /* padding-bottom은 탭바 높이 + safe-area를 포함 — shorthand로 덮이지 않게 함께 지정 */
+    body { padding: 12px 8px calc(58px + env(safe-area-inset-bottom)); }
     .container { padding: 16px 14px; border-radius: 12px; }
     h1 { font-size: 20px; }
     .header-row { margin-bottom: 16px; }
