@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="포트폴리오">
@@ -973,6 +974,8 @@ async function tryLoadFromHandle() {
 
 // portfolio.html과 같은 폴더의 JSON을 자동 fetch (HTTP server에서만 동작)
 async function loadFromFile() {
+  // 공개 호스팅(.github.io, .vercel.app 등)엔 개인 데이터 파일 없음 — 404 콘솔 노이즈 회피
+  if (/\.github\.io$|\.vercel\.app$|\.netlify\.app$|\.pages\.dev$/.test(location.hostname)) return null;
   try {
     const res = await fetch('./' + DATA_FILENAME, { cache: 'no-cache' });
     if (!res.ok) return null;
@@ -1916,12 +1919,17 @@ async function installPWA() {
   }
 }
 
-// 페이지 로드 시 standalone이면 버튼 즉시 숨김
+// 페이지 로드 시 설치 버튼 표시 결정
 window.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('install-btn');
+  if (!btn) return;
   if (isStandalone()) {
-    const btn = document.getElementById('install-btn');
-    if (btn) btn.hidden = true;
+    btn.hidden = true;
+    return;
   }
+  // iOS Safari는 beforeinstallprompt 미지원 — 안내용으로 버튼 항상 표시
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) btn.hidden = false;
 });
 
 // Service Worker 등록 — PWA "설치 가능" 판정에 필수 (https + manifest + sw)
