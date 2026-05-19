@@ -132,11 +132,19 @@
   .bottom-nav .nav-fab                     { grid-column: 3; }
   .bottom-nav .nav-install                 { grid-column: 4; }
 
-  /* 앱설치 hidden(설치 후 또는 미지원 브라우저) → 홈·사용방법을 안쪽 슬롯(2·4)으로 이동
-     결과: [빈(1)] [홈(2)] [FAB(3)] [사용방법(4)] [빈(5)]
-     양쪽 끝 1/5 자리가 비고 안쪽으로 모여 분산감 줄임. FAB는 정 가운데 유지. */
-  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="home"]  { grid-column: 2; }
-  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="guide"] { grid-column: 4; }
+  /* 앱설치 hidden(설치 후 또는 미지원 브라우저)
+     홈은 slot 1 안에서 우측 정렬, 사용방법은 slot 5 안에서 좌측 정렬 + padding으로 미세 안쪽 이동
+     → 좌측 끝(41px)과 가운데(123px) 사이의 *적당한* 위치 (~60px)로 조절 */
+  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="home"] {
+    grid-column: 1;
+    justify-self: end;
+    padding-right: 18px;
+  }
+  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="guide"] {
+    grid-column: 5;
+    justify-self: start;
+    padding-left: 18px;
+  }
 
   /* FAB (Floating Action Button) — 탭바 정 가운데(3번째 grid 컬럼) 원형 + 종목 추가 */
   .bottom-nav .nav-fab {
@@ -2432,9 +2440,12 @@ window.addEventListener('DOMContentLoaded', () => {
     setInstallBtnHidden(true);  // 이미 설치된 앱으로 실행 → 두 버튼 모두 숨김
     return;
   }
-  // iOS Safari는 beforeinstallprompt 미지원 — 안내용으로 버튼 항상 표시
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (isIOS) setInstallBtnHidden(false);
+  // 모바일이면 install 버튼 항상 표시:
+  // - iOS Safari: beforeinstallprompt 미지원 → 안내 alert로 fallback
+  // - Android Chrome: beforeinstallprompt 휴리스틱 미충족 시 안내 alert로 fallback,
+  //   이벤트 도착 시 deferredPrompt에 저장되어 자동 설치 동작
+  const isMobile = /iPhone|iPad|iPod|Android/.test(navigator.userAgent);
+  if (isMobile) setInstallBtnHidden(false);
 });
 
 // Service Worker 등록 — PWA "설치 가능" 판정에 필수 (https + manifest + sw)
