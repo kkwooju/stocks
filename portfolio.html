@@ -106,11 +106,25 @@
   }
   .bottom-nav .nav-btn .ico { width: 18px; height: 18px; }
   .bottom-nav .nav-btn.active { color: var(--primary); }
+  /* 탭바 안 install 버튼 — 색으로 살짝 강조 */
+  .bottom-nav .nav-install {
+    color: var(--primary); border: none;
+    background: none; padding: 4px 0;
+  }
+  .bottom-nav .nav-install:hover { color: var(--primary-hover); }
+  .bottom-nav .nav-install[hidden] { display: none !important; }
 
   @media (max-width: 600px) {
     .bottom-nav { display: flex; }
     /* 탭바 높이(~52px) + safe-area 만큼 콘텐츠 여백 + 그림자 분리감을 위한 약간 추가 */
     body { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
+    /* 모바일에서는 헤더 install 버튼 숨김 — 탭바로 이동했으므로 중복 방지 */
+    .header-actions #install-btn { display: none !important; }
+  }
+  /* 데스크탑(>600px)에서는 탭바 자체가 안 보이므로 탭바 install도 자연히 숨김.
+     안전망 — 강제 숨김 추가 */
+  @media (min-width: 601px) {
+    .nav-install { display: none !important; }
   }
 
   /* ==================== 사용 가이드 페이지 ==================== */
@@ -1033,6 +1047,10 @@
   <button class="nav-btn" data-view="guide" onclick="switchView('guide')" type="button">
     <svg class="ico ico-lg nav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     <span>사용방법</span>
+  </button>
+  <button class="nav-btn nav-install install-btn" id="nav-install-btn" hidden onclick="installPWA()" type="button" title="홈 화면에 앱처럼 설치">
+    <svg class="ico ico-lg nav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <span>앱 설치</span>
   </button>
 </nav>
 
@@ -2287,18 +2305,21 @@ function isStandalone() {
 
 let deferredInstallPrompt = null;
 
+// 헤더 + 탭바 두 install 버튼을 한 번에 토글
+function setInstallBtnHidden(hidden) {
+  document.querySelectorAll('.install-btn').forEach(b => { b.hidden = hidden; });
+}
+
 // Chrome/Edge/Android: 설치 가능 시점 이벤트 → prompt 보관 + 버튼 표시
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  if (!isStandalone()) {
-    document.getElementById('install-btn').hidden = false;
-  }
+  if (!isStandalone()) setInstallBtnHidden(false);
 });
 
-// 설치 완료 → 버튼 숨김
+// 설치 완료 → 두 버튼 모두 숨김 (다음 standalone 진입 시에도 안 보임)
 window.addEventListener('appinstalled', () => {
-  document.getElementById('install-btn').hidden = true;
+  setInstallBtnHidden(true);
   deferredInstallPrompt = null;
 });
 
@@ -2306,9 +2327,7 @@ async function installPWA() {
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === 'accepted') {
-      document.getElementById('install-btn').hidden = true;
-    }
+    if (outcome === 'accepted') setInstallBtnHidden(true);
     deferredInstallPrompt = null;
     return;
   }
@@ -2323,15 +2342,13 @@ async function installPWA() {
 
 // 페이지 로드 시 설치 버튼 표시 결정
 window.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('install-btn');
-  if (!btn) return;
   if (isStandalone()) {
-    btn.hidden = true;
+    setInstallBtnHidden(true);  // 이미 설치된 앱으로 실행 → 두 버튼 모두 숨김
     return;
   }
   // iOS Safari는 beforeinstallprompt 미지원 — 안내용으로 버튼 항상 표시
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (isIOS) btn.hidden = false;
+  if (isIOS) setInstallBtnHidden(false);
 });
 
 // Service Worker 등록 — PWA "설치 가능" 판정에 필수 (https + manifest + sw)
