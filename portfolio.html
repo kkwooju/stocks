@@ -1187,8 +1187,8 @@ function formatPrice(v) {
 // 모바일에서 회사명 12자 초과 시 말줄임 — 데스크탑은 원본 표시
 function formatTickerName(name) {
   if (!name) return '';
-  if (matchMedia('(max-width: 600px)').matches && name.length > 12) {
-    return name.substring(0, 12) + '…';
+  if (matchMedia('(max-width: 600px)').matches && name.length > 20) {
+    return name.substring(0, 20) + '…';
   }
   return name;
 }
