@@ -70,6 +70,154 @@
   .save-status.error { color: var(--danger); }
   .save-status.loading { color: var(--accent); }
 
+  /* ==================== 뷰 전환 (SPA) ==================== */
+  .view[hidden] { display: none !important; }
+
+  /* ==================== 모바일 하단 탭바 ==================== */
+  .bottom-nav {
+    display: none; /* 데스크탑에선 숨김 */
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 12px rgba(15,23,42,0.05);
+    z-index: 90;
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottom-nav .nav-btn {
+    flex: 1; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 6px 0;
+    color: var(--muted); font-size: 10px; font-weight: 600;
+    transition: color 0.15s;
+  }
+  .bottom-nav .nav-btn-icon { font-size: 20px; line-height: 1; }
+  .bottom-nav .nav-btn.active { color: var(--primary); }
+  .bottom-nav .nav-btn.active .nav-btn-icon { transform: scale(1.05); }
+
+  @media (max-width: 600px) {
+    .bottom-nav { display: flex; }
+    body { padding-bottom: 78px; }  /* 탭바 높이만큼 콘텐츠 여백 */
+  }
+
+  /* ==================== 사용 가이드 페이지 ==================== */
+  .view-guide {
+    max-width: 720px; margin: 0 auto;
+    padding: 0;
+  }
+  .view-guide .guide-hero {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .view-guide .guide-hero-icon { font-size: 44px; margin-bottom: 8px; }
+  .view-guide .guide-hero h1 {
+    color: white !important; margin: 0 0 6px;
+    font-size: 22px; font-weight: 800;
+  }
+  .view-guide .guide-hero p {
+    margin: 0; opacity: 0.95;
+    font-size: 13px; line-height: 1.5;
+  }
+  .guide-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .guide-section h2 {
+    margin: 0 0 14px; font-size: 16px; font-weight: 700;
+    color: var(--text-strong);
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: -0.01em;
+  }
+  .guide-section h2::before { content: none; }
+  .guide-section p { margin: 8px 0; font-size: 13px; line-height: 1.6; color: var(--text); }
+  .guide-section ul { margin: 6px 0; padding-left: 22px; font-size: 13px; line-height: 1.7; }
+  .guide-section li { margin: 3px 0; }
+  .guide-section code {
+    background: #f1f3f7; padding: 1px 6px;
+    border-radius: 4px; font-size: 12px;
+    font-family: 'SF Mono', Consolas, monospace;
+    color: var(--text-strong);
+  }
+  .guide-section strong { color: var(--text-strong); }
+  .guide-steps { display: grid; gap: 10px; margin-top: 12px; }
+  .guide-step {
+    display: flex; gap: 14px;
+    padding: 14px 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #eef0f4;
+  }
+  .step-num {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: var(--primary); color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-title { font-weight: 700; font-size: 13px; color: var(--text-strong); margin-bottom: 4px; }
+  .step-desc { font-size: 12px; line-height: 1.55; color: var(--muted); }
+  .step-desc code { font-size: 11px; }
+
+  /* 프라이버시 callout — 가장 강조되는 영역 */
+  .callout-privacy {
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%);
+    border: 2px solid #34d399;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    position: relative;
+  }
+  .callout-privacy .callout-icon {
+    position: absolute; top: -14px; left: 18px;
+    background: #10b981; color: white;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+  }
+  .callout-privacy h3 {
+    margin: 6px 0 8px;
+    color: #047857; font-size: 15px; font-weight: 800;
+  }
+  .callout-privacy p {
+    margin: 6px 0; color: #064e3b; font-size: 13px; line-height: 1.6;
+  }
+  .callout-privacy strong { color: #047857; }
+
+  .callout-tip {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 12px 0;
+    font-size: 12px; line-height: 1.55;
+    color: #78350f;
+  }
+  .callout-tip strong { color: #92400e; }
+
+  .flow-cards {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 12px;
+  }
+  .flow-card {
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .flow-card-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--text-strong); }
+  .flow-card-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
   /* PWA 설치 버튼 — beforeinstallprompt 발생 시 + standalone 모드 아닐 때만 표시 */
   .install-btn {
     background: var(--primary); color: white;
@@ -557,7 +705,7 @@
 </style>
 </head>
 <body>
-<div class="container">
+<div class="container view view-home" id="view-home">
   <div class="header-row">
     <h1>📊 주식 포트폴리오</h1>
     <div class="header-actions">
@@ -641,6 +789,187 @@
     </div>
   </div>
 </div>
+
+<!-- ============ 사용 가이드 (모바일 하단 "사용방법" 탭에서 노출) ============ -->
+<div class="container view view-guide" id="view-guide" hidden>
+  <div class="guide-hero">
+    <div class="guide-hero-icon">📊</div>
+    <h1>주식 포트폴리오 사용 가이드</h1>
+    <p>5분이면 시작할 수 있어요. 본인 데이터는 디바이스 안에만 안전하게 보관됩니다.</p>
+  </div>
+
+  <!-- 🔒 프라이버시 강조 (가장 위) -->
+  <div class="callout-privacy">
+    <div class="callout-icon">🔒</div>
+    <h3>내 종목 데이터는 어디로 가나요?</h3>
+    <p>
+      <strong>아무 데도 안 갑니다.</strong> 본인의 보유 종목·매수단가·수량은
+      <strong>이 디바이스의 localStorage에만</strong> 저장됩니다.
+      서버·클라우드로 전송되지 않으며, 광고·트래커도 없어요.
+    </p>
+    <p>
+      가격·환율을 받아오기 위해 Yahoo Finance API만 호출합니다 — 이때
+      <em>티커 심볼</em>만 전달되고 매수단가·수량 등은 외부에 나가지 않습니다.
+    </p>
+  </div>
+
+  <!-- 4단계 시작 플로우 -->
+  <div class="guide-section">
+    <h2>🚀 4단계로 시작하기</h2>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">홈 화면에서 시연 종목 확인</div>
+          <div class="step-desc">처음 접속 시 한국·미국 ETF 5개 시연 데이터가 보입니다. 본인 데이터로 교체하기 전에 동작을 확인.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title"><strong>+ 종목 추가</strong> 클릭 → 본인 종목 입력</div>
+          <div class="step-desc">
+            티커는 시장 코드를 <em>뺀</em> 본체만 — 예: <code>AAPL</code>, <code>069500</code>, <code>2330</code>(대만 TSMC).
+            시장 드롭다운에서 거래소(🇰🇷 코스피, 🇺🇸 미국, 🇹🇼 대만 등)를 선택하면 통화·접미사 자동 결정.
+          </div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">자동으로 현재가·회사명·환율 갱신</div>
+          <div class="step-desc">
+            저장 즉시 Yahoo Finance에서 현재가·회사명·KRW 대비 환율을 가져와 수익률·평가금액을 계산합니다.
+            ⓘ <strong>15분 지연 시세</strong>이므로 실시간 매매용은 아닙니다.
+          </div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">시연 종목 삭제 + 자신만의 포트폴리오 완성</div>
+          <div class="step-desc">
+            데스크탑은 행의 <strong>✕</strong> 버튼, 모바일은 행을 탭해 편집 모달의 <strong>🗑 삭제</strong>로 시연 종목 정리.
+            이후 변경 사항은 자동 저장됩니다 — 페이지를 닫았다 다시 열어도 그대로 유지.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 데이터 백업/복원 -->
+  <div class="guide-section">
+    <h2>💾 데이터 백업 · PC·모바일 동기화</h2>
+    <p>
+      디바이스 안에만 저장되므로 <strong>PC와 모바일은 각자 별개</strong>로 데이터가 쌓입니다.
+      두 기기에서 같은 종목을 보려면 한 쪽에서 저장 → 다른 쪽에서 불러오기.
+    </p>
+    <div class="flow-cards">
+      <div class="flow-card">
+        <div class="flow-card-title">💾 파일로 저장</div>
+        <div class="flow-card-desc">홈 화면의 <strong>💾 저장</strong> 버튼 → <code>portfolio_data.json</code> 다운로드</div>
+      </div>
+      <div class="flow-card">
+        <div class="flow-card-title">📂 파일에서 불러오기</div>
+        <div class="flow-card-desc">홈 화면의 <strong>📂 불러오기</strong> → 받은 JSON 파일 선택 → 즉시 적용</div>
+      </div>
+      <div class="flow-card">
+        <div class="flow-card-title">🔗 파일 연결 (PC만)</div>
+        <div class="flow-card-desc">Chrome·Edge에서 한 번 연결 → 이후 변경 시 자동 저장 (다운로드 폴더 안 거침)</div>
+      </div>
+      <div class="flow-card">
+        <div class="flow-card-title">🗑 초기화</div>
+        <div class="flow-card-desc">시연 데이터로 되돌리기 — 본인 데이터는 사라지므로 백업 후 실행</div>
+      </div>
+    </div>
+    <div class="callout-tip">
+      <strong>💡 동기화 팁:</strong> PC에서 💾 저장 → 카톡으로 본인에게 전송 → 모바일에서 📂 불러오기.
+      반대 방향도 동일. 자동 sync는 아니지만 가장 안전하고 빠른 방법입니다.
+    </div>
+  </div>
+
+  <!-- 앱 설치 안내 -->
+  <div class="guide-section">
+    <h2>📱 앱처럼 홈 화면에 설치하기</h2>
+    <p>웹사이트를 모바일 앱처럼 사용할 수 있습니다 (PWA). 별도 앱스토어 등록 없이 즉시 가능.</p>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <div class="step-num">A</div>
+        <div class="step-body">
+          <div class="step-title">갤럭시·안드로이드 Chrome</div>
+          <div class="step-desc">우상단 <strong>📱 앱 설치</strong> 버튼 클릭 → 자동 설치. 또는 메뉴 ⋮ → "홈 화면에 추가".</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">B</div>
+        <div class="step-body">
+          <div class="step-title">아이폰·아이패드 Safari</div>
+          <div class="step-desc">하단 공유 버튼 □↑ → <strong>"홈 화면에 추가"</strong>. 도넛+₩ 아이콘이 홈에 생성됩니다.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">C</div>
+        <div class="step-body">
+          <div class="step-title">PC Chrome·Edge</div>
+          <div class="step-desc">주소창 우측 설치 아이콘 ⊕ 클릭 → 별도 창으로 앱처럼 실행.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 핵심 기능 안내 -->
+  <div class="guide-section">
+    <h2>🎯 핵심 기능</h2>
+    <ul>
+      <li><strong>다국가 시장 지원</strong>: 한국·미국·일본·홍콩·대만·네덜란드·영국·프랑스·독일·이탈리아·중국·스위스 — 시장 드롭다운에서 선택</li>
+      <li><strong>도넛 차트 두 기준</strong>: <em>평가금액 기준</em>(현재 비중) vs <em>매수금액 기준</em>(초기 투입) — 리밸런싱 신호 파악</li>
+      <li><strong>한국식 색상</strong>: 🔴 상승 / 🔵 하락 (미국식과 반대)</li>
+      <li><strong>도넛 조각 호버·탭</strong>: 작은 조각은 라벨이 안 보여도 호버하면 종목명·평가금액·수익률 툴팁 표시</li>
+      <li><strong>레전드 정렬</strong>: 평가금액·수익률·종목명·비율 4가지 기준 + 오름차순/내림차순 토글</li>
+      <li><strong>표 헤더 정렬</strong>: 데스크탑에서 "티커"·"수익률" 클릭 시 정렬 (모바일은 카드 리스트라 정렬 없음)</li>
+    </ul>
+  </div>
+
+  <!-- 자주 묻는 질문 -->
+  <div class="guide-section">
+    <h2>❓ 자주 묻는 질문</h2>
+    <p><strong>Q. 가격이 안 올라와요</strong></p>
+    <p>거의 항상 시장 선택 오류입니다. 예: <code>BESI</code>를 🇺🇸 미국으로 두면 안 됨 → 🇳🇱 네덜란드로 변경.
+       공개 CORS 프록시 일시 장애일 수도 있으니 잠시 후 <strong>🔄 가격 갱신</strong> 재시도.</p>
+    <p style="margin-top:14px"><strong>Q. 데이터가 사라졌어요</strong></p>
+    <p>브라우저 시크릿 모드는 종료 시 localStorage가 삭제됩니다. 일반 모드 사용 권장.
+       또 브라우저 "사이트 데이터 삭제"하면 사라지므로 정기적으로 💾 백업.</p>
+    <p style="margin-top:14px"><strong>Q. 다른 사람에게 내 데이터가 보이나요?</strong></p>
+    <p><strong>아니요.</strong> localStorage는 해당 디바이스의 해당 브라우저에만 격리됩니다.
+       같은 URL을 다른 사람이 열어도 시연 데이터만 보입니다.</p>
+    <p style="margin-top:14px"><strong>Q. 수익률 색이 미국 주식 사이트와 반대예요</strong></p>
+    <p>한국식 관례를 따라 <strong>🔴 상승 / 🔵 하락</strong>입니다.</p>
+  </div>
+
+  <!-- 마지막 강조 -->
+  <div class="callout-privacy">
+    <div class="callout-icon">✓</div>
+    <h3>안심하고 사용하세요</h3>
+    <p>
+      회원가입 ❌ &nbsp;·&nbsp; 광고 ❌ &nbsp;·&nbsp; 추적 ❌ &nbsp;·&nbsp; 데이터 외부 전송 ❌
+    </p>
+    <p>
+      소스 코드 전체 공개: <a href="https://github.com/kkwooju/stocks" target="_blank" rel="noopener" style="color:#047857;font-weight:700;">github.com/kkwooju/stocks</a>
+    </p>
+  </div>
+</div>
+
+<!-- ============ 모바일 하단 탭바 ============ -->
+<nav class="bottom-nav" id="bottom-nav" aria-label="주 네비게이션">
+  <button class="nav-btn active" data-view="home" onclick="switchView('home')" type="button">
+    <span class="nav-btn-icon">🏠</span>
+    <span>홈</span>
+  </button>
+  <button class="nav-btn" data-view="guide" onclick="switchView('guide')" type="button">
+    <span class="nav-btn-icon">📖</span>
+    <span>사용방법</span>
+  </button>
+</nav>
 
 <!-- 종목 편집 모달 — 표 컨텍스트 밖이라 자유로운 레이아웃 -->
 <div id="edit-modal" class="modal" hidden>
@@ -1874,6 +2203,17 @@ async function refreshPrices() {
 
 // ========== file:// 프로토콜 감지 — 외부 API 호출이 차단되므로 안내 ==========
 const IS_FILE_PROTOCOL = location.protocol === 'file:';
+
+// ========== 뷰 전환 (홈 ↔ 사용방법) ==========
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => {
+    v.hidden = v.id !== 'view-' + view;
+  });
+  document.querySelectorAll('.bottom-nav .nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === view);
+  });
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
 
 // ========== PWA 설치 ==========
 // "이미 앱 모드(홈 화면 아이콘에서 실행)"이면 설치 버튼 숨김 — 설치 의미 없음
