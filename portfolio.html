@@ -41,13 +41,18 @@
   }
   body {
     font-family: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(180deg, #f4f5f9 0%, #eef0f6 100%);
+    /* gradient를 viewport에 고정 — 페이지가 길어져도 색이 계속 변하지 않게 (무한 스크롤 느낌 차단) */
+    background: linear-gradient(180deg, #f4f5f9 0%, #eef0f6 100%) fixed;
     margin: 0;
     padding: 28px 20px;
     color: var(--text);
-    min-height: 100vh;
+    /* 100vh: iOS Safari URL bar 변동 시 잘못된 높이. 100dvh가 동적 viewport 정확히 추적 */
+    min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
+    /* iOS bounce overscroll 차단 — "끝없어 보이는" 효과 방지 */
+    overscroll-behavior-y: contain;
   }
+  html { overscroll-behavior-y: contain; }
   .container {
     max-width: 1280px;
     margin: 0 auto;
