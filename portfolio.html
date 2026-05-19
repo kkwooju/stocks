@@ -91,6 +91,8 @@
   .view[hidden] { display: none !important; }
 
   /* ==================== 모바일 하단 탭바 ==================== */
+  /* 5칸 grid: [1fr 홈] [1fr 사용방법] [56px FAB] [1fr 앱설치] [1fr 빈자리]
+     → FAB가 정확히 50% 위치 (정 가운데). 4번째·5번째는 좌우 대칭 균형용. */
   .bottom-nav {
     display: none; /* 데스크탑에선 숨김 */
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -101,13 +103,16 @@
     box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
     z-index: 90;
     padding: 2px 0 calc(2px + env(safe-area-inset-bottom));
+    grid-template-columns: 1fr 1fr 64px 1fr 1fr;
+    align-items: center;
   }
   .bottom-nav .nav-btn {
-    flex: 1; background: none; border: none; cursor: pointer;
+    background: none; border: none; cursor: pointer;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 1px; padding: 4px 0;
     color: var(--muted); font-size: 10px; font-weight: 600;
     transition: color 0.15s;
+    min-width: 0;
   }
   .bottom-nav .nav-btn .ico { width: 18px; height: 18px; }
   .bottom-nav .nav-btn.active { color: var(--primary); }
@@ -119,14 +124,14 @@
   .bottom-nav .nav-install:hover { color: var(--primary-hover); }
   .bottom-nav .nav-install[hidden] { display: none !important; }
 
-  /* FAB (Floating Action Button) — 탭바 가운데 큰 원형 + 종목 추가 */
+  /* FAB (Floating Action Button) — 탭바 정 가운데(3번째 grid 컬럼) 원형 + 종목 추가 */
   .bottom-nav .nav-fab {
-    flex: 0 0 56px;
+    justify-self: center;
     width: 56px; height: 56px;
     background: var(--primary); color: white;
     border: 4px solid var(--surface);
     border-radius: 50%;
-    margin: -22px 6px 0; /* 탭바 위로 띄움 */
+    margin-top: -22px; /* 탭바 위로 띄움 */
     padding: 0;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     cursor: pointer;
@@ -141,7 +146,7 @@
   .bottom-nav .nav-fab svg { width: 24px; height: 24px; }
 
   @media (max-width: 600px) {
-    .bottom-nav { display: flex; }
+    .bottom-nav { display: grid; }
     /* 탭바 높이(~52px) + safe-area 만큼 콘텐츠 여백 + 그림자 분리감을 위한 약간 추가 */
     body { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
     /* 모바일에서는 헤더 install 버튼 숨김 — 탭바로 이동했으므로 중복 방지 */
@@ -1100,6 +1105,8 @@
     <svg class="ico ico-lg nav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     <span>앱 설치</span>
   </button>
+  <!-- 5칸 grid 좌우 대칭 균형용 빈 자리 (시각상 안 보임) -->
+  <div aria-hidden="true"></div>
 </nav>
 
 <!-- 종목 편집 모달 — 표 컨텍스트 밖이라 자유로운 레이아웃 -->
@@ -1619,11 +1626,13 @@ function syncDisplay(id) {
 
 // ========== 편집 모달 ==========
 let modalRowId = null;
+let modalIsNew = false; // true면 + 종목 추가로 막 만들어진 행 — 취소 시 행 자체 제거
 
-function openEditModal(id) {
+function openEditModal(id, isNew = false) {
   const row = document.getElementById('row-' + id);
   if (!row) return;
   modalRowId = id;
+  modalIsNew = isNew;
 
   // 시장 select 옵션 재생성 (MARKETS 의존)
   const currentMarket = row.querySelector('.market-select').value || 'US';
@@ -1661,20 +1670,38 @@ function openEditModal(id) {
 }
 
 function closeEditModal() {
+  // 새 행으로 추가된 후 ticker가 비어있으면 행 자체를 제거 (취소·backdrop·ESC 모두 동일)
+  if (modalIsNew && modalRowId) {
+    const row = document.getElementById('row-' + modalRowId);
+    const tickerInput = row?.querySelector('.ticker-input');
+    if (row && (!tickerInput || !tickerInput.value.trim())) {
+      row.remove();
+      saveAndDraw();
+    }
+  }
   document.getElementById('edit-modal').hidden = true;
   modalRowId = null;
+  modalIsNew = false;
 }
 
 function saveModal() {
   if (!modalRowId) return closeEditModal();
   const row = document.getElementById('row-' + modalRowId);
   if (!row) return closeEditModal();
+  // 저장 전 ticker 검증 — 비어있으면 거부 (빈 행 추가 방지)
+  const ticker = document.getElementById('m-ticker').value.trim().toUpperCase();
+  if (!ticker) {
+    alert('티커를 입력해주세요.');
+    document.getElementById('m-ticker').focus();
+    return;
+  }
   // 모달 값 → 행 input/select에 다시 set
-  row.querySelector('.ticker-input').value = document.getElementById('m-ticker').value.trim().toUpperCase();
+  row.querySelector('.ticker-input').value = ticker;
   row.querySelector('.market-select').value = document.getElementById('m-market').value;
   row.querySelector('.qty-input').value = document.getElementById('m-qty').value;
   row.querySelector('.buy-input').value = document.getElementById('m-buy').value;
   syncDisplay(modalRowId);
+  modalIsNew = false; // 저장됐으니 더 이상 "취소 시 제거 대상" 아님
   closeEditModal();
   saveAndDraw();
 }
@@ -1689,7 +1716,7 @@ function deleteFromModal() {
 
 function addRowAndOpenModal() {
   addRow({}, {});
-  openEditModal(rowId); // addRow가 rowId 증가시킨 그 값
+  openEditModal(rowId, true); // 새 행 — 모달 취소 시 자동 제거 대상
 }
 
 // ESC로 모달 닫기
