@@ -69,6 +69,19 @@
   .save-status.error { color: var(--danger); }
   .save-status.loading { color: var(--accent); }
 
+  /* PWA 설치 버튼 — beforeinstallprompt 발생 시 + standalone 모드 아닐 때만 표시 */
+  .install-btn {
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px;
+    padding: 7px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .install-btn:hover { background: var(--primary-hover); }
+  .install-btn[hidden] { display: none !important; }
+  .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
   /* KPI 카드 행 */
   .kpis {
     display: grid; grid-template-columns: repeat(4, 1fr);
@@ -546,7 +559,10 @@
 <div class="container">
   <div class="header-row">
     <h1>📊 주식 포트폴리오</h1>
-    <div class="save-status" id="save-status">대기 중</div>
+    <div class="header-actions">
+      <button id="install-btn" class="install-btn" hidden onclick="installPWA()" title="홈 화면에 앱처럼 설치">📱 앱 설치</button>
+      <div class="save-status" id="save-status">대기 중</div>
+    </div>
   </div>
 
   <div class="kpis">
@@ -1855,6 +1871,65 @@ async function refreshPrices() {
 
 // ========== file:// 프로토콜 감지 — 외부 API 호출이 차단되므로 안내 ==========
 const IS_FILE_PROTOCOL = location.protocol === 'file:';
+
+// ========== PWA 설치 ==========
+// "이미 앱 모드(홈 화면 아이콘에서 실행)"이면 설치 버튼 숨김 — 설치 의미 없음
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+      || document.referrer.startsWith('android-app://');
+}
+
+let deferredInstallPrompt = null;
+
+// Chrome/Edge/Android: 설치 가능 시점 이벤트 → prompt 보관 + 버튼 표시
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!isStandalone()) {
+    document.getElementById('install-btn').hidden = false;
+  }
+});
+
+// 설치 완료 → 버튼 숨김
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-btn').hidden = true;
+  deferredInstallPrompt = null;
+});
+
+async function installPWA() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('install-btn').hidden = true;
+    }
+    deferredInstallPrompt = null;
+    return;
+  }
+  // iOS Safari는 beforeinstallprompt 미지원 — 수동 안내
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS) {
+    alert('iPhone/iPad에서는 Safari 하단의 공유 버튼 □↑ 을 누르고 "홈 화면에 추가"를 선택해주세요.');
+  } else {
+    alert('브라우저 메뉴에서 "홈 화면에 추가" 또는 "앱 설치"를 선택해주세요.');
+  }
+}
+
+// 페이지 로드 시 standalone이면 버튼 즉시 숨김
+window.addEventListener('DOMContentLoaded', () => {
+  if (isStandalone()) {
+    const btn = document.getElementById('install-btn');
+    if (btn) btn.hidden = true;
+  }
+});
+
+// Service Worker 등록 — PWA "설치 가능" 판정에 필수 (https + manifest + sw)
+if ('serviceWorker' in navigator && !IS_FILE_PROTOCOL) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 
 // ========== launcher 연동: heartbeat + 페이지 닫힘 시 서버 종료 ==========
 // localhost로 띄운 launcher만 /heartbeat과 /shutdown 엔드포인트를 가지고 있음.

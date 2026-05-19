@@ -1,367 +1,168 @@
-# 주식 포트폴리오 차트
+# 📊 주식 포트폴리오
 
-브라우저에서 동작하는 단일 파일 SPA. 보유 종목을 관리하고, Yahoo Finance API로 현재가를 자동 조회해 도넛 차트와 KPI로 비중·수익률을 시각화한다.
+내 보유 종목을 한 번에 관리하고, 실시간 가격으로 평가금액·수익률·비중을 본다.
 
-## 목차
-
-1. [요약](#1-요약)
-2. [파일 구성](#2-파일-구성)
-3. [사용 흐름](#3-사용-흐름)
-4. [데이터 모델](#4-데이터-모델)
-5. [시장 매핑](#5-시장-매핑)
-6. [저장 전략 (3단계 폴백)](#6-저장-전략-3단계-폴백)
-7. [가격 조회와 CORS 우회](#7-가격-조회와-cors-우회)
-8. [차트와 KPI](#8-차트와-kpi)
-9. [Launcher와 자동 종료](#9-launcher와-자동-종료)
-10. [빌드 / 배포](#10-빌드--배포)
-11. [알려진 한계와 트레이드오프](#11-알려진-한계와-트레이드오프)
-12. [개발 결정 기록](#12-개발-결정-기록)
-
-> 자동 업데이트 / 배포 전략 정리는 별도 문서 → **[DEPLOYMENT.md](./DEPLOYMENT.md)**
+**바로 사용**: https://kkwooju.github.io/stocks/portfolio.html
 
 ---
 
-## 1. 요약
+## 주요 기능
 
-| 항목 | 설명 |
-|---|---|
-| 형태 | 단일 HTML 파일 + 단일 .exe launcher |
-| 외부 의존성 | (실행 시점) 인터넷, 기본 브라우저 / (빌드 시점) Python 3, PyInstaller |
-| 클라이언트 기술 | Vanilla JS, SVG, File System Access API, IndexedDB |
-| 데이터 출처 | Yahoo Finance v8 chart API (CORS 프록시 경유) |
-| 데이터 저장 | 같은 폴더의 `portfolio_data.json` (1순위) → IndexedDB 파일 핸들 → localStorage → DEFAULTS |
-| 라이센스/공유 | 단일 사용자 도구. 다른 사용자에게는 exe + html 두 파일만 전달 |
+- 🌏 **다국가 시장 지원**: 한국(코스피·코스닥) · 미국 · 일본 · 홍콩 · 대만 · 네덜란드 · 영국 · 프랑스 · 독일 · 이탈리아 · 중국 · 스위스
+- 💱 **자동 가격·환율 갱신**: Yahoo Finance에서 현재가와 KRW 대비 환율을 자동 조회
+- 📈 **수익률 계산**: 매수단가 ↔ 현재가 기준 수익률을 종목별·전체로 표시
+- 🍩 **도넛 차트**: 평가금액/매수금액 두 기준으로 포트폴리오 비중 시각화
+- 📱 **PWA 설치**: 홈 화면에 추가해서 앱처럼 사용 (갤럭시·아이폰·PC 모두)
+- 💾 **로컬 저장**: 본인 데이터는 디바이스 안에만 보관 (서버에 안 올라감)
 
-## 2. 파일 구성
+---
 
-```
-portfolio/
-├─ portfolio.html              # 메인 페이지 (UI + 모든 로직)
-├─ portfolio_data.json         # 보유 종목 데이터 (자동 로드)
-├─ portfolio-launcher.exe      # 단일 실행 파일 (콘솔 숨김, 브라우저 자동 오픈)
-├─ launcher.py                 # exe 빌드 소스 (Python)
-├─ start-portfolio.bat         # 보조 시작 스크립트 (Python 환경 가정)
-└─ README.md                   # 이 문서
-```
+## 처음 시작하는 법
 
-각 파일의 역할:
+### 1. 페이지 접속
 
-- **portfolio.html**: 모든 UI와 로직이 들어있는 SPA. localhost로 띄워야 외부 API 호출 가능.
-- **portfolio_data.json**: 보유 종목·환율·회사명 등이 저장된 영속 데이터. 페이지가 로드 시 자동 fetch.
-- **portfolio-launcher.exe**: Python 인터프리터 + 작은 HTTP 서버가 통째로 패킹된 실행 파일. 더블클릭하면 백그라운드에서 서버 시작 후 브라우저 자동 오픈, 브라우저 탭이 닫히면 자동 종료.
-- **launcher.py**: 위 exe의 소스. PyInstaller로 빌드.
-- **start-portfolio.bat**: exe 사용 전 단계의 폴백. Python이 시스템에 깔려있어야 함.
+브라우저에서 https://kkwooju.github.io/stocks/portfolio.html 열기
 
-## 3. 사용 흐름
+처음엔 시연용 종목 5개(KODEX 200·국고채·S&P500·AAPL·VOO)가 보입니다. 본인 데이터로 교체해서 사용.
 
-### 본인 사용
+### 2. 종목 추가하기
 
-1. `portfolio-launcher.exe` 더블클릭
-2. (백그라운드에서) HTTP 서버 시작 → 기본 브라우저로 `http://localhost:8765/portfolio.html` 자동 오픈
-3. 가격 자동 갱신, 보유 종목 편집, 시장 비중 도넛 확인
-4. (선택) **🔗 파일 연결**로 `portfolio_data.json`을 직접 자동 저장하도록 핸들 발급
-5. 브라우저 탭을 닫으면 launcher 프로세스도 자동으로 백그라운드에서 종료
+1. **"+ 종목 추가"** 클릭 → 편집 모달이 열림
+2. 입력:
+   - **티커**: 시장 코드를 *뺀* 본체만. 예: `AAPL`, `069500`, `BESI`, `2330`
+   - **시장**: 드롭다운에서 본인 종목의 거래소 선택 (🇰🇷 코스피, 🇺🇸 미국, 🇹🇼 대만 등)
+   - **수량**: 보유 주식 수
+   - **매수단가**: 본인이 산 단가 (현지 통화 기준)
+3. **저장** 클릭 → 자동으로 현재가가 API에서 받아져 수익률·평가금액 계산
 
-### 다른 사용자에게 전달
+### 3. 기존 시연 종목 정리
 
-전달할 파일은 단 2개:
+각 행 우측의 **✕** 버튼으로 시연 종목을 삭제하거나, 행을 클릭해 본인 데이터로 수정.
 
-- `portfolio-launcher.exe` (≈ 8.2 MB)
-- `portfolio.html` (≈ 40 KB)
+---
 
-받은 사용자는 Python 설치 불필요. 같은 폴더에 두고 exe만 더블클릭.
+## 시장별 티커 입력 예시
 
-처음 만나는 시스템 메시지:
-
-- **Windows SmartScreen**: "추가 정보 → 실행" (서명 안 된 exe라 1회만)
-- **Windows Firewall**: 로컬호스트 통신 허용 (1회만)
-
-## 4. 데이터 모델
-
-`portfolio_data.json` 한 행의 스키마:
-
-```json
-{
-  "ticker": "BESI",
-  "market": "AS",
-  "tickerFull": "BESI.AS",
-  "name": "BE Semiconductor Industries N.V.",
-  "currency": "EUR",
-  "qty": 30,
-  "buyPrice": 130,
-  "currentPrice": 253.3,
-  "buyKRW": 5772000,
-  "valueKRW": 11246520,
-  "returnPct": 0.948,
-  "rowId": "row-4"
-}
-```
-
-| 필드 | 출처 | 비고 |
+| 종목 | 시장 선택 | 티커 입력 |
 |---|---|---|
-| `ticker` | 사용자 입력 | 시장 접미사를 *뺀* 본체. 영문은 대문자로 정규화 |
-| `market` | 사용자 선택 | `MARKETS` 테이블의 코드 (US/KS/T/AS/...) |
-| `tickerFull` | 자동 계산 | `ticker + MARKETS[market].suffix` — Yahoo 호출용 |
-| `name` | API 응답 | `meta.longName` 또는 `meta.shortName` |
-| `currency` | market에서 도출 | KRW 환산용 |
-| `qty`, `buyPrice` | 사용자 입력 | 현지 통화 기준 |
-| `currentPrice` | API 응답 | 사용자 입력 불가 (읽기 전용 셀) |
-| `buyKRW`, `valueKRW` | 자동 계산 | `qty × price × FX[currency]` |
-| `returnPct` | 자동 계산 | `(current-buy)/buy` — 현지 통화 기준, 환차익 제외 |
+| 삼성전자 | 🇰🇷 코스피 | `005930` |
+| KODEX 200 | 🇰🇷 코스피 | `069500` |
+| Apple | 🇺🇸 미국 | `AAPL` |
+| Tesla | 🇺🇸 미국 | `TSLA` |
+| 도요타 | 🇯🇵 일본 | `7203` |
+| TSMC (대만) | 🇹🇼 대만 | `2330` |
+| BE Semiconductor | 🇳🇱 네덜란드 | `BESI` |
+| HSBC | 🇬🇧 영국 | `HSBA` |
+| LVMH | 🇫🇷 프랑스 | `MC` |
+| SAP | 🇩🇪 독일 | `SAP` |
 
-루트의 `fx` 객체는 통화별 KRW 환산 환율. 사용자가 직접 수정 가능.
+---
 
-### 마이그레이션
+## 📱 모바일 앱처럼 설치하기
 
-기존 데이터(통화 컬럼 하나만 있던 옛 스키마)는 페이지 로드 시 자동으로 `migrateHolding()` 함수가 새 스키마로 변환:
+페이지 우상단에 **"📱 앱 설치"** 버튼이 보이면 그걸 클릭하면 자동 설치됩니다. 안 보이면 브라우저 메뉴를 이용:
 
-- `ticker: '069500.KS'` + `currency: 'KRW'` → 정규식으로 접미사 분리 → `{ ticker: '069500', market: 'KS' }`
-- `ticker: 'BESI'` + `currency: 'EUR'` → 접미사 없으면 통화로 시장 추론 → `market: 'AS'`
+### 갤럭시 Chrome
+1. 페이지 우상단 ⋮ 메뉴
+2. **"홈 화면에 추가"**
+3. 홈 화면에 도넛+₩ 아이콘 생성 → 탭하면 풀스크린 앱처럼 실행
 
-## 5. 시장 매핑
+### 아이폰 Safari
+1. 페이지 하단 공유 버튼 □↑
+2. **"홈 화면에 추가"**
+3. 동일한 효과
 
-`MARKETS` 상수가 시장 코드 ↔ Yahoo 접미사 ↔ 통화 ↔ 한글 라벨 ↔ 국기를 한 곳에서 관리.
+### PC Chrome/Edge
+1. 주소창 우측의 설치 아이콘 (⊕ 모양) 클릭
+2. 또는 메뉴 ⋮ → **"앱 설치"**
+3. 별도 창으로 앱처럼 실행 가능
 
-| 코드 | 국기 | 한글 | Yahoo 접미사 | 통화 |
-|---|---|---|---|---|
-| US | 🇺🇸 | 미국 | (없음) | USD |
-| KS | 🇰🇷 | 코스피 | `.KS` | KRW |
-| KQ | 🇰🇷 | 코스닥 | `.KQ` | KRW |
-| T | 🇯🇵 | 일본 | `.T` | JPY |
-| HK | 🇭🇰 | 홍콩 | `.HK` | HKD |
-| SS | 🇨🇳 | 상하이 | `.SS` | CNY |
-| SZ | 🇨🇳 | 선전 | `.SZ` | CNY |
-| AS | 🇳🇱 | 네덜란드 | `.AS` | EUR |
-| L | 🇬🇧 | 영국 | `.L` | GBP |
-| PA | 🇫🇷 | 프랑스 | `.PA` | EUR |
-| DE | 🇩🇪 | 독일 | `.DE` | EUR |
-| MI | 🇮🇹 | 이탈리아 | `.MI` | EUR |
-| SW | 🇨🇭 | 스위스 | `.SW` | CHF |
+---
 
-각 항목에 `short`(행/레전드 표시용)와 `long`(드롭다운 풀네임/툴팁) 라벨을 둬서 UI 위치마다 적절한 길이로 표현.
+## 차트 사용법
 
-## 6. 저장 전략 (3단계 폴백)
+### 비중 기준 전환
 
-페이지 로드 시 `init()`이 다음 순서로 데이터 소스를 시도:
+- **평가금액 기준** (기본): 현재가 × 수량으로 비중 계산 → 현재 포지션이 어느 종목에 몰려있나
+- **매수금액 기준**: 매수단가 × 수량으로 비중 계산 → 내가 어느 종목에 더 많이 투입했나
 
-```
-1순위) IndexedDB 파일 핸들 (File System Access API)
-       ↓ 핸들 없거나 권한 'prompt'
-2순위) ./portfolio_data.json (HTTP fetch)
-       ↓ HTTP 환경 아니거나 파일 없음
-3순위) localStorage
-       ↓ 비어있음
-4순위) DEFAULTS (시연용 5종목)
-```
+두 도넛이 다르면 = 일부 종목이 크게 오르거나 내려서 비중이 자연히 바뀐 것. **리밸런싱 시점 판단**에 사용.
 
-상태바에 어느 소스에서 로드됐는지 즉시 표시 → 사용자가 혼동 없이 파악.
+### 도넛 조각 자세히 보기
 
-### 자동 저장 동작
+작은 조각은 라벨이 안 보이는데, **마우스 올리기(PC) 또는 탭(모바일)** 하면 툴팁에 종목명·평가금액·비중·수익률 표시.
 
-- **localStorage**: 모든 입력에 대해 즉시 자동 저장 (작업 중 손실 방지)
-- **파일 핸들 (FSA)**: 변경 후 2초 디바운스 → 같은 폴더의 `portfolio_data.json`에 직접 쓰기. 다운로드 폴더 우회.
-- **💾 저장 버튼**: 핸들이 없으면 한 번에 파일 다운로드. 핸들 있으면 즉시 그 파일에 직접 저장.
+### 레전드 정렬
 
-### 왜 File System Access API인가
+도넛 아래 정렬 토글:
+- **평가금액 ▼** (기본): 평가금액 큰 종목부터
+- **수익률**: +/- 순
+- **종목**: 가나다순
+- **비율**: 비중 큰 순
 
-브라우저 보안 정책상 `<a download>` 방식은 항상 OS 기본 다운로드 폴더로만 갑니다. 임의 위치에 쓰는 유일하게 안전한 방법이 FSA — 사용자가 한 번 파일을 선택하면 브라우저가 `FileSystemFileHandle`이라는 권한 토큰을 발급하고, 이후 페이지가 그 핸들로 자동 읽기·쓰기. 핸들은 IndexedDB에 보관해 페이지 재시작에 걸쳐 영속화.
+각 버튼을 다시 누르면 ▲/▼ 방향 토글.
 
-지원: Chrome 86+, Edge 86+. Firefox/Safari는 미지원이라 기존 다운로드 방식으로 자동 폴백.
+### 표 헤더 정렬
 
-## 7. 가격 조회와 CORS 우회
+데스크탑에서 **"티커"** 또는 **"수익률"** 헤더 클릭 → 오름차순/내림차순 토글.
 
-Yahoo Finance v8 chart 엔드포인트를 사용:
+---
 
-```
-https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1d
-```
+## 💾 데이터 백업·복원·이동
 
-응답의 `chart.result[0].meta`에서 `regularMarketPrice`, `currency`, `longName`, `shortName`, `marketState`를 추출.
+본인 보유 데이터는 **디바이스 안의 localStorage에만 저장**됩니다. 서버에 안 올라감 (=프라이버시 안전, 단점은 자동 sync 없음).
 
-### 다중 CORS 프록시 fallback
+### 단일 디바이스
+- 종목 추가/수정 시 **자동 저장됨** — 페이지 닫았다 다시 열어도 그대로
+- 별도 백업 없이도 안전 (브라우저 데이터를 삭제하지 않는 한)
 
-브라우저는 Yahoo에 직접 호출 불가 (CORS 미허용). 공개 프록시 3개를 순서대로 시도:
+### PC ↔ 모바일 동기화
+브라우저·디바이스가 다르면 localStorage가 분리됨. 동기화하려면:
 
-```javascript
-const PROXIES = [
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`
-];
-```
+1. **PC에서** **💾 저장** 클릭 → `portfolio_data.json` 파일 다운로드
+2. 그 파일을 모바일로 전송 (카카오톡·Drive·이메일 등)
+3. **모바일에서** **📂 불러오기** → 받은 파일 선택
+4. 모바일에도 같은 데이터
 
-한 프록시가 실패(rate limit, 일시 다운 등)하면 다음 프록시로 자동 전환. 전체 가용성 = `1 - Π(개별 다운 확률)`.
+반대 방향도 동일.
 
-### 병렬 호출
+### 데이터 초기화
+- **🗑 초기화**: 모든 종목을 삭제하고 시연 데이터로 되돌림
 
-`Promise.allSettled`로 모든 종목을 동시에 조회. 한 종목이 실패해도 나머지는 정상 진행. 성공·실패 결과를 종목별로 따로 추적해 상태바에 "✓ 5/6 성공 · 실패: XYZ" 형식으로 안내.
+---
 
-### 회사명 표시
+## 자주 묻는 질문
 
-API 응답에 이미 회사명이 포함되므로 추가 호출 없음. `meta.longName ?? meta.shortName`을 row의 `dataset.name`과 JSON에 저장 → 다음 페이지 로드 시 API 응답 오기 전에도 즉시 표시.
+### Q. 가격이 갱신 안 돼요
+- **A.** 페이지 우상단 상태바를 확인하세요. "⚠ 실패: SYMBOL" 메시지가 보이면 *해당 티커의 시장 선택이 잘못된 경우가 99%*. 예: BESI를 미국으로 선택하면 안 됨 → 🇳🇱 네덜란드로 변경.
+- 공개 CORS 프록시 일시 장애일 수도 있음. 잠시 후 🔄 **가격 갱신** 다시 클릭.
 
-## 8. 차트와 KPI
+### Q. 환율이 자동으로 안 바뀌어요
+- **A.** 보유 종목에 등장하는 외화만 자동 갱신됩니다. 한국 종목만 있으면 USD 등은 그대로 둠.
+- 직접 수정도 가능: **환율 설정** 펼치면 각 통화별 input 표시.
 
-### 도넛 차트
+### Q. 시연 종목을 다 지웠는데 다시 시연 종목이 보여요
+- **A.** 페이지 새로고침 시 localStorage가 비어있으면 자동으로 시연 데이터 로드됩니다. 본인 종목을 추가하면 그 데이터가 저장되어 다음부터는 본인 데이터가 보임.
 
-외부 라이브러리 없이 **순수 SVG `<path>`** 로 직접 그림:
+### Q. 수익률이 한국 종목은 빨간색, 외국 종목 따라 이상해요
+- **A.** **한국식 색상 관례**: 상승 = 🔴 빨강, 하락 = 🔵 파랑. 미국식과 반대.
 
-```
-M (시작점) → A (외곽 호, sweep=1) → L → A (내부 호, sweep=0) → Z
-```
+### Q. 동일 종목을 PC와 모바일에 자동 동기화하려면?
+- **A.** 현재 버전은 수동 sync (💾 / 📂). 자동 sync는 별도 클라우드 저장소(Vercel KV·Supabase 등)가 필요해 향후 추가 검토 대상.
 
-각 종목 조각에 색상 팔레트(13색)를 인덱스 순환으로 할당.
+### Q. 데이터가 사라졌어요
+- **A.** 브라우저 시크릿 모드는 종료 시 localStorage 삭제됨. 일반 모드로 사용하세요. 또 브라우저 설정에서 "사이트 데이터 삭제"하면 사라짐 — 정기적으로 💾로 백업 권장.
 
-### 두 가지 비중 기준 (탭 전환)
+### Q. 새 시장(예: 인도) 추가 가능?
+- **A.** Yahoo Finance에서 지원하는 시장이면 코드 추가로 가능 (`.NS`=인도). 요청 시 추가.
 
-| 탭 | 분자 | 의미 |
-|---|---|---|
-| **평가금액 기준** (기본) | `qty × currentPrice × FX` | "현재 내 포지션 비중" |
-| **매수금액 기준** | `qty × buyPrice × FX` | "내가 어디에 자본 투입했나" |
+---
 
-두 도넛의 차이가 크면 = 일부 종목이 크게 오르거나 내려서 비중이 변동 = **시각적 리밸런싱 신호**.
+## 무료 / 광고 없음 / 추적 없음
 
-### KPI 카드 4종
+- 별도 회원가입 불필요
+- 광고·트래커 없음
+- 데이터는 본인 디바이스에만 저장 — 서버 전송 없음
+- 가격 조회만 외부 API(Yahoo Finance) 사용
 
-- 총 매수금액 (KRW)
-- 총 평가금액 (KRW)
-- 평가손익 (KRW, +/- 색)
-- 총 수익률 (%, 현지통화 기준 환차익 제외)
-
-### 한국식 색상
-
-상승 = 빨강 (`var(--up)` = `#dc2626`), 하락 = 파랑 (`var(--down)` = `#2563eb`). 행별 수익률, KPI, 레전드 모두 일관.
-
-## 9. Launcher와 자동 종료
-
-`launcher.py`는 다음을 한다:
-
-1. 자기 위치(`sys.argv[0]`의 dirname)를 web root로 설정
-2. 8765부터 빈 포트 자동 탐색
-3. `ThreadingTCPServer`로 HTTP 서버 시작
-4. 1초 후 기본 브라우저로 `http://localhost:{port}/portfolio.html` 오픈
-5. 별도 스레드에서 heartbeat 모니터 시작
-
-### Heartbeat / Shutdown 엔드포인트
-
-서버는 `SimpleHTTPRequestHandler`를 확장해 두 가지 특수 경로를 처리:
-
-| 경로 | 메서드 | 동작 |
-|---|---|---|
-| `/heartbeat` | GET | `last_heartbeat[0] = time.time()` 갱신 |
-| `/shutdown` | POST | `shutdown_requested[0] = True` |
-
-페이지(JS)는 5초마다 `/heartbeat`를 호출. 모니터 스레드는 마지막 heartbeat로부터 15초가 지나면 `server.shutdown()` → 프로세스 종료.
-
-브라우저 탭이 닫히는 순간엔 `pagehide`/`beforeunload` 이벤트에서 `navigator.sendBeacon('/shutdown')`을 호출 → 즉시 종료 신호. `sendBeacon`은 unload 중에도 브라우저가 끝까지 보낼 것을 보장한다.
-
-### 다중 탭 안전
-
-heartbeat 방식은 자연스럽게 다중 탭을 지원. 어느 한 탭이라도 ping을 보내면 서버 살아있음. 마지막 탭이 닫혀야 종료.
-
-### noconsole 안전 패치
-
-`--noconsole` 모드에선 `sys.stdout`/`sys.stderr`가 `None`이 되어 `print()`나 라이브러리 로그 호출이 `AttributeError`. 시작 시 `_NullIO`로 대체해 모든 출력을 조용히 흡수.
-
-## 10. 빌드 / 배포
-
-PyInstaller로 단일 .exe 생성:
-
-```bash
-pip install pyinstaller
-
-pyinstaller --onefile --noconsole \
-            --name portfolio-launcher \
-            --distpath ./dist \
-            --workpath ./build \
-            --specpath ./build \
-            launcher.py
-```
-
-| 옵션 | 의미 |
-|---|---|
-| `--onefile` | 모든 의존성을 .exe 하나에 압축 패킹 |
-| `--noconsole` | 콘솔창 띄우지 않음 (백그라운드 실행) |
-| `--name` | 출력 파일명 (영문 권장 — 한글 인코딩 회피) |
-| `--distpath` / `--workpath` / `--specpath` | 임시 디렉터리를 한 폴더에 모아 정리 쉽게 |
-
-결과물 `dist/portfolio-launcher.exe`를 portfolio 루트로 복사 후 `build/`·`dist/`·`*.spec` 정리. 약 8.2 MB.
-
-## 11. 알려진 한계와 트레이드오프
-
-### file:// 직접 열기 한계
-
-`file://` origin은 브라우저가 외부 cross-origin fetch를 거의 모두 차단한다. 그래서:
-
-- 더블클릭으로 portfolio.html을 직접 열면 → **가격 API 차단** → 갱신 실패
-- 페이지 코드에 `IS_FILE_PROTOCOL` 감지 + 친절한 안내 메시지로 즉시 알림
-- 정식 사용 경로 = **portfolio-launcher.exe 더블클릭** (HTTP server 환경 보장)
-
-### 가격 지연
-
-Yahoo Finance는 실시간이 아니라 보통 **15분 지연**. 장중 매매 결정용으로는 부정확. KPI 카드의 sub 라벨에 명시.
-
-### 환차익 처리
-
-수익률 계산은 *현지 통화 기준* (환차익 제외). 예: AAPL 매수 $250 → 현재 $409 → +63.6% (한 줄). 다만 KRW 평가금액(`valueKRW`)은 *현재 환율*로 환산해 표시 — 환율 변동이 평가금액에 반영. 매수 시점 환율은 별도 저장 안 함.
-
-### 공개 프록시 신뢰성
-
-corsproxy.io, allorigins.win 모두 무료 공개 서비스라 일시적 다운/rate limit 발생 가능. 다중 fallback으로 완화하지만 영구적 안정성이 필요하면 본인의 Cloudflare Worker로 대체 권장.
-
-### Windows Defender SmartScreen
-
-서명 안 된 exe는 처음 보는 사용자에게 "알 수 없는 게시자" 경고가 뜬다. "추가 정보 → 실행"으로 우회 가능하지만 매번 첫 사용자에게 한 번씩 발생. 코드 서명 인증서가 있어야 영구 해결.
-
-## 12. 개발 결정 기록
-
-다음 결정들은 트레이드오프 끝에 채택. 의도를 잊지 않도록 기록.
-
-### 단일 HTML 파일
-
-- 외부 빌드 도구·번들러 없이 누구나 텍스트 에디터로 수정 가능
-- 의존성 폭주 없음, 보안 검토 쉬움
-- 대신 코드량이 한 파일에 누적 → 1000줄 넘으면 분리 검토 필요
-
-### Vanilla JS / 프레임워크 없음
-
-- React/Vue 도입 시 빌드 단계 필요 → 단일 HTML 원칙과 충돌
-- 도넛 차트도 직접 SVG로 그리는 게 라이브러리 도입보다 코드량 적음
-
-### 통화 컬럼 → 시장 컬럼 변경
-
-- 통화는 시장에서 도출 가능 (KS→KRW, AS→EUR…) → 컬럼 분리는 중복
-- 사용자가 `.KS`/`.AS` 같은 Yahoo 접미사를 외울 필요 없음
-- 시장 = 한글 라벨로 표시해 직관성 ↑
-
-### 행 표시/편집 모드 분리
-
-- 평소엔 텍스트, 편집 시에만 입력 폼이 더 시각적으로 깔끔
-- 동일 셀에 `<span class="cell-display">`와 `<input class="cell-edit">`을 모두 두고 부모 `.editing` 클래스 토글로 전환
-- input은 항상 SoT(단일 진실 공급원) — `readHoldings`/`saveToLocal` 등 데이터 로직은 그대로
-
-### 영문 티커 대문자 정규화
-
-- CSS `text-transform: uppercase`로 시각, JS `toUpperCase()`로 저장 데이터까지 일관
-- 한글·숫자(005930·삼성전자)는 `toUpperCase()`에 영향 없음 → 안전
-
-### scrollbar 시각 숨김
-
-- `html { scrollbar-width: none }` + `::-webkit-scrollbar { display: none }`
-- 스크롤 동작 자체는 유지되어 콘텐츠 길이가 늘어도 OK
-
-### 자동 다운로드 안 함
-
-- 모든 변경마다 파일 다운로드되면 OS 알림 폭주
-- 명시적 💾 버튼 + (FSA 지원 시) 디바운스 자동 저장이 균형점
-
-### exe 빌드 시 한글 회피
-
-- 출력 파일명·옵션은 모두 영문
-- 작업/임시 폴더(`build`, `dist`)도 영문이라 인코딩 이슈 없음
-- 단, 작업 디렉터리 경로(`D:\projects\주식\portfolio`)에 한글이 있어도 PyInstaller 6.x는 안정적
-
-### 한국식 색상
-
-- 상승 = 빨강, 하락 = 파랑 (미국·유럽과 반대)
-- CSS 변수 `--up`/`--down`으로 한 곳에서 관리 → 변경 쉬움
+피드백·기능 요청은 GitHub Issues로: https://github.com/kkwooju/stocks/issues
