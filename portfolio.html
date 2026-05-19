@@ -41,18 +41,20 @@
   }
   body {
     font-family: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
-    /* gradient를 viewport에 고정 — 페이지가 길어져도 색이 계속 변하지 않게 (무한 스크롤 느낌 차단) */
-    background: linear-gradient(180deg, #f4f5f9 0%, #eef0f6 100%) fixed;
+    background: linear-gradient(180deg, #f4f5f9 0%, #eef0f6 100%);
+    background-attachment: fixed; /* 데스크탑: gradient viewport 고정 */
     margin: 0;
     padding: 28px 20px;
     color: var(--text);
     /* 100vh: iOS Safari URL bar 변동 시 잘못된 높이. 100dvh가 동적 viewport 정확히 추적 */
     min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
-    /* iOS bounce overscroll 차단 — "끝없어 보이는" 효과 방지 */
-    overscroll-behavior-y: contain;
+    /* overscroll-behavior 제거 — iOS Safari 일부 버전에서 본문 스크롤 차단하는 버그 회피 */
   }
-  html { overscroll-behavior-y: contain; }
+  /* 모바일에서는 background-attachment: scroll — iOS Safari fixed background 스크롤 지연 회피 */
+  @media (max-width: 600px) {
+    body { background-attachment: scroll; }
+  }
   .container {
     max-width: 1280px;
     margin: 0 auto;
@@ -123,6 +125,19 @@
   }
   .bottom-nav .nav-install:hover { color: var(--primary-hover); }
   .bottom-nav .nav-install[hidden] { display: none !important; }
+
+  /* 모든 자식의 grid-column을 명시적으로 고정 — install hidden 시
+     grid auto-placement가 FAB·empty를 다른 슬롯으로 끌어오지 못하게 함 */
+  .bottom-nav .nav-btn[data-view="home"]  { grid-column: 1; }
+  .bottom-nav .nav-btn[data-view="guide"] { grid-column: 2; }
+  .bottom-nav .nav-fab                     { grid-column: 3; }
+  .bottom-nav .nav-install                 { grid-column: 4; }
+
+  /* 앱설치 hidden(설치 후 또는 미지원 브라우저) → 사용방법을 5번 자리(우측 끝)로 이동
+     결과: [홈(1)] [빈(2)] [FAB(3)] [빈(4)] [사용방법(5)] — 양쪽 끝 + 가운데 균등 */
+  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="guide"] {
+    grid-column: 5;
+  }
 
   /* FAB (Floating Action Button) — 탭바 정 가운데(3번째 grid 컬럼) 원형 + 종목 추가 */
   .bottom-nav .nav-fab {
