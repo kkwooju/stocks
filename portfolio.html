@@ -119,12 +119,52 @@
   .bottom-nav .nav-install:hover { color: var(--primary-hover); }
   .bottom-nav .nav-install[hidden] { display: none !important; }
 
+  /* FAB (Floating Action Button) — 탭바 가운데 큰 원형 + 종목 추가 */
+  .bottom-nav .nav-fab {
+    flex: 0 0 56px;
+    width: 56px; height: 56px;
+    background: var(--primary); color: white;
+    border: 4px solid var(--surface);
+    border-radius: 50%;
+    margin: -22px 6px 0; /* 탭바 위로 띄움 */
+    padding: 0;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .bottom-nav .nav-fab:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+  }
+  .bottom-nav .nav-fab:active { transform: scale(0.94); }
+  .bottom-nav .nav-fab svg { width: 24px; height: 24px; }
+
   @media (max-width: 600px) {
     .bottom-nav { display: flex; }
     /* 탭바 높이(~52px) + safe-area 만큼 콘텐츠 여백 + 그림자 분리감을 위한 약간 추가 */
     body { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
     /* 모바일에서는 헤더 install 버튼 숨김 — 탭바로 이동했으므로 중복 방지 */
     .header-actions #install-btn { display: none !important; }
+
+    /* 모바일 보유 종목 패널 버튼 정렬:
+       - 종목 추가: 탭바 FAB로 이동했으므로 숨김
+       - 파일 연결: PC 전용(Chrome/Edge File System Access API) 모바일 숨김
+       - 가격 갱신: 가장 자주 쓰는 액션 → 풀너비 첫 줄
+       - 저장/불러오기/초기화: 3열 grid로 한 줄에 배치 */
+    .btn-row {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 8px !important;
+    }
+    .btn-row .btn-add { display: none !important; }
+    .btn-row #btn-connect { display: none !important; }
+    .btn-row .spacer { display: none !important; }
+    .btn-row #btn-refresh {
+      grid-column: 1 / -1; /* 풀너비 */
+      justify-content: center;
+    }
+    .btn-row .btn { justify-content: center; padding: 9px 6px; }
   }
   /* 데스크탑(>600px)에서는 탭바 자체가 안 보이므로 탭바 install도 자연히 숨김.
      안전망 — 강제 숨김 추가 */
@@ -1052,6 +1092,9 @@
   <button class="nav-btn" data-view="guide" onclick="switchView('guide')" type="button">
     <svg class="ico ico-lg nav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
     <span>사용방법</span>
+  </button>
+  <button class="nav-fab" onclick="addRowAndOpenModal()" type="button" aria-label="종목 추가" title="종목 추가">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
   <button class="nav-btn nav-install install-btn" id="nav-install-btn" hidden onclick="installPWA()" type="button" title="홈 화면에 앱처럼 설치">
     <svg class="ico ico-lg nav-btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
