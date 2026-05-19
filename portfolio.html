@@ -359,9 +359,13 @@
     gap: 24px;
   }
   @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
-  /* 가로 스크롤 안전망 — html에만 적용 (body에 두면 Android Chrome에서 세로 스크롤도 영향)
-     overflow-x: clip = 클리핑만, 스크롤 컨테이너 생성 안 함 → 본문 스크롤 안전 */
-  html { overflow-x: clip; max-width: 100vw; }
+  /* 가로 스크롤 안전망
+     - html에 overflow를 주면 Android Chrome 일부 버전에서 fixed 자식(.bottom-nav)이
+       containing block을 html로 잡아 fixed 위치가 깨짐 (스크롤 따라 올라옴)
+     - body에 overflow-x: clip 적용 — clip은 스크롤 컨테이너 생성 안 함(본문 스크롤 안전)
+       + fixed의 containing block은 여전히 viewport 유지 */
+  html { max-width: 100vw; }
+  body { overflow-x: clip; }
   .container { overflow-x: clip; }
 
   /* 모바일 보강: 패딩 축소, 컨테이너 라운드 줄임, 표 셀 압축 */
