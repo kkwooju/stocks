@@ -1,0 +1,22 @@
+# 개인 보유 종목 데이터 — public repo에 올리면 본인 포트폴리오가 노출됨
+portfolio_data.json
+
+# 빌드 산출물 (PyInstaller)
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+
+# 단일 실행 파일 (8MB+, GitHub Pages 호스팅엔 불필요)
+portfolio-launcher.exe
+portfolio_data.zip
+
+# Playwright 검증 캐시 (개발 시 생성됨)
+.playwright-mcp/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
