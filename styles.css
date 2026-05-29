@@ -1,0 +1,867 @@
+
+  * { box-sizing: border-box; }
+  /* 페이지 스크롤바 시각적 숨김 (스크롤 동작은 유지) */
+  html { scrollbar-width: none; -ms-overflow-style: none; }
+  html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .table-wrap { scrollbar-width: none; -ms-overflow-style: none; }
+  .table-wrap::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  :root {
+    --bg: #f4f5f9;
+    --surface: #ffffff;
+    --border: #e7e8ee;
+    --border-strong: #d1d5db;
+    --muted: #6b7280;
+    --text: #1f2937;
+    --text-strong: #0f172a;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --up: #dc2626;    /* 상승=빨강 (한국 관례) */
+    --down: #2563eb;  /* 하락=파랑 */
+    --accent: #0ea5e9;
+    --success: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.06);
+  }
+  body {
+    font-family: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(180deg, #f4f5f9 0%, #eef0f6 100%);
+    background-attachment: fixed; /* 데스크탑: gradient viewport 고정 */
+    margin: 0;
+    padding: 28px 20px;
+    color: var(--text);
+    /* 100vh: iOS Safari URL bar 변동 시 잘못된 높이. 100dvh가 동적 viewport 정확히 추적 */
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    /* overscroll-behavior 제거 — iOS Safari 일부 버전에서 본문 스크롤 차단하는 버그 회피 */
+  }
+  /* 모바일에서는 background-attachment: scroll — iOS Safari fixed background 스크롤 지연 회피 */
+  @media (max-width: 600px) {
+    body { background-attachment: scroll; }
+  }
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px 32px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+  }
+  .header-row {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+  }
+  h1 {
+    margin: 0; font-size: 24px; color: var(--text-strong);
+    font-weight: 700; letter-spacing: -0.02em;
+  }
+  .save-status { font-size: 12px; color: var(--muted); }
+  .save-status.saved { color: var(--success); }
+  .save-status.error { color: var(--danger); }
+  .save-status.loading { color: var(--accent); }
+
+  /* ==================== 인앱 브라우저 안내 배너 ==================== */
+  .inapp-banner {
+    position: sticky; top: 0; z-index: 1000;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-bottom: 1px solid #f59e0b;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+    color: #78350f; font-size: 12px;
+  }
+  .inapp-banner[hidden] { display: none !important; }
+  .inapp-banner .ib-icon {
+    flex-shrink: 0; color: #92400e;
+    display: flex; align-items: center;
+  }
+  .inapp-banner .ib-text {
+    flex: 1; min-width: 0; line-height: 1.45;
+  }
+  .inapp-banner .ib-text strong {
+    display: block; color: #78350f; font-weight: 700;
+    font-size: 13px; margin-bottom: 2px;
+  }
+  .inapp-banner .ib-text span { color: #92400e; font-size: 11px; }
+  .inapp-banner .ib-btn {
+    flex-shrink: 0;
+    background: #f59e0b; color: white;
+    border: none; border-radius: 6px;
+    padding: 7px 12px; font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .inapp-banner .ib-btn:hover { background: #d97706; }
+  .inapp-banner .ib-close {
+    flex-shrink: 0;
+    background: transparent; border: none;
+    color: #92400e; font-size: 14px; cursor: pointer;
+    padding: 4px 6px; line-height: 1;
+  }
+  @media (max-width: 480px) {
+    .inapp-banner { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+    .inapp-banner .ib-text { flex-basis: calc(100% - 32px); }
+    .inapp-banner .ib-btn { flex: 1; }
+  }
+
+  /* ==================== SVG 아이콘 (Lucide 스타일) ==================== */
+  .ico {
+    display: inline-block; vertical-align: -3px;
+    width: 16px; height: 16px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .ico-sm { width: 14px; height: 14px; vertical-align: -2px; }
+  .ico-lg { width: 22px; height: 22px; vertical-align: -5px; }
+  .ico-xl { width: 44px; height: 44px; stroke-width: 1.6; }
+
+  /* ==================== 뷰 전환 (SPA) ==================== */
+  .view[hidden] { display: none !important; }
+
+  /* ==================== 모바일 하단 탭바 ==================== */
+  /* 5칸 grid: [1fr 홈] [1fr 사용방법] [56px FAB] [1fr 앱설치] [1fr 빈자리]
+     → FAB가 정확히 50% 위치 (정 가운데). 4번째·5번째는 좌우 대칭 균형용. */
+  .bottom-nav {
+    display: none; /* 데스크탑에선 숨김 */
+    position: fixed; bottom: 0; left: 0; right: 0;
+    /* 불투명 흰색 — backdrop-filter 제거(Android Chrome 일부 GPU에서 스크롤 응답 차단 버그 회피) */
+    background: var(--surface);
+    border-top: 1px solid var(--border-strong);
+    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+    z-index: 90;
+    padding: 2px 0 calc(2px + env(safe-area-inset-bottom));
+    grid-template-columns: 1fr 1fr 64px 1fr 1fr;
+    align-items: center;
+  }
+  .bottom-nav .nav-btn {
+    background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; padding: 4px 0;
+    color: var(--muted); font-size: 10px; font-weight: 600;
+    transition: color 0.15s;
+    min-width: 0;
+  }
+  .bottom-nav .nav-btn .ico { width: 18px; height: 18px; }
+  .bottom-nav .nav-btn.active { color: var(--primary); }
+  /* 탭바 안 install 버튼 — 색으로 살짝 강조 */
+  .bottom-nav .nav-install {
+    color: var(--primary); border: none;
+    background: none; padding: 4px 0;
+  }
+  .bottom-nav .nav-install:hover { color: var(--primary-hover); }
+  .bottom-nav .nav-install[hidden] { display: none !important; }
+
+  /* 모든 자식의 grid-column을 명시적으로 고정 — install hidden 시
+     grid auto-placement가 FAB·empty를 다른 슬롯으로 끌어오지 못하게 함 */
+  .bottom-nav .nav-btn[data-view="home"]  { grid-column: 1; }
+  .bottom-nav .nav-btn[data-view="guide"] { grid-column: 2; }
+  .bottom-nav .nav-fab                     { grid-column: 3; }
+  .bottom-nav .nav-install                 { grid-column: 4; }
+
+  /* 앱설치 hidden(설치 후 또는 미지원 브라우저)
+     홈은 slot 1 안에서 우측 정렬, 사용방법은 slot 5 안에서 좌측 정렬 + padding으로 미세 안쪽 이동
+     → 좌측 끝(41px)과 가운데(123px) 사이의 *적당한* 위치 (~60px)로 조절 */
+  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="home"] {
+    grid-column: 1;
+    justify-self: end;
+    padding-right: 18px;
+  }
+  .bottom-nav:has(#nav-install-btn[hidden]) .nav-btn[data-view="guide"] {
+    grid-column: 5;
+    justify-self: start;
+    padding-left: 18px;
+  }
+
+  /* FAB (Floating Action Button) — 탭바 정 가운데(3번째 grid 컬럼) 원형 + 종목 추가 */
+  .bottom-nav .nav-fab {
+    justify-self: center;
+    width: 56px; height: 56px;
+    background: var(--primary); color: white;
+    border: 4px solid var(--surface);
+    border-radius: 50%;
+    margin-top: -30px; /* 탭바 위로 더 띄움 — floating 느낌 강조 */
+    padding: 0;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .bottom-nav .nav-fab:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+  }
+  .bottom-nav .nav-fab:active { transform: scale(0.94); }
+  .bottom-nav .nav-fab svg { width: 24px; height: 24px; }
+
+  @media (max-width: 600px) {
+    .bottom-nav { display: grid; }
+    /* 탭바 높이(~52px) + safe-area 만큼 콘텐츠 여백 + 그림자 분리감을 위한 약간 추가 */
+    body { padding-bottom: calc(58px + env(safe-area-inset-bottom)); }
+    /* 모바일에서는 헤더 install 버튼 숨김 — 탭바로 이동했으므로 중복 방지 */
+    .header-actions #install-btn { display: none !important; }
+
+    /* 모바일 보유 종목 패널 버튼 정렬:
+       - 종목 추가: 탭바 FAB로 이동했으므로 숨김
+       - 파일 연결: PC 전용(Chrome/Edge File System Access API) 모바일 숨김
+       - 가격 갱신: 가장 자주 쓰는 액션 → 풀너비 첫 줄
+       - 저장/불러오기/초기화: 3열 grid로 한 줄에 배치 */
+    .btn-row {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 8px !important;
+    }
+    .btn-row .btn-add { display: none !important; }
+    .btn-row #btn-connect { display: none !important; }
+    .btn-row .spacer { display: none !important; }
+    .btn-row #btn-refresh {
+      grid-column: 1 / -1; /* 풀너비 */
+      justify-content: center;
+    }
+    .btn-row .btn { justify-content: center; padding: 9px 6px; }
+  }
+  /* 데스크탑(>600px)에서는 탭바 자체가 안 보이므로 탭바 install도 자연히 숨김.
+     안전망 — 강제 숨김 추가 */
+  @media (min-width: 601px) {
+    .nav-install { display: none !important; }
+  }
+
+  /* ==================== 사용 가이드 페이지 ==================== */
+  .view-guide {
+    max-width: 720px; margin: 0 auto;
+    padding: 0;
+  }
+  .view-guide .guide-hero {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .view-guide .guide-hero-icon { margin-bottom: 10px; }
+  .view-guide .guide-hero h1 {
+    color: white !important; margin: 0 0 6px;
+    font-size: 22px; font-weight: 800;
+  }
+  .view-guide .guide-hero p {
+    margin: 0; opacity: 0.95;
+    font-size: 13px; line-height: 1.5;
+  }
+  .guide-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .guide-section h2 {
+    margin: 0 0 14px; font-size: 16px; font-weight: 700;
+    color: var(--text-strong);
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: -0.01em;
+  }
+  .guide-section h2::before { content: none; }
+  .guide-section p { margin: 8px 0; font-size: 13px; line-height: 1.6; color: var(--text); }
+  .guide-section ul { margin: 6px 0; padding-left: 22px; font-size: 13px; line-height: 1.7; }
+  .guide-section li { margin: 3px 0; }
+  .guide-section code {
+    background: #f1f3f7; padding: 1px 6px;
+    border-radius: 4px; font-size: 12px;
+    font-family: 'SF Mono', Consolas, monospace;
+    color: var(--text-strong);
+  }
+  .guide-section strong { color: var(--text-strong); }
+  .guide-steps { display: grid; gap: 10px; margin-top: 12px; }
+  .guide-step {
+    display: flex; gap: 14px;
+    padding: 14px 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    border: 1px solid #eef0f4;
+  }
+  .step-num {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: var(--primary); color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-title { font-weight: 700; font-size: 13px; color: var(--text-strong); margin-bottom: 4px; }
+  .step-desc { font-size: 12px; line-height: 1.55; color: var(--muted); }
+  .step-desc code { font-size: 11px; }
+
+  /* 프라이버시 callout — 가장 강조되는 영역 */
+  .callout-privacy {
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%);
+    border: 2px solid #34d399;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    position: relative;
+  }
+  .callout-privacy .callout-icon {
+    position: absolute; top: -14px; left: 18px;
+    background: #10b981; color: white;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+  }
+  .callout-privacy h3 {
+    margin: 6px 0 8px;
+    color: #047857; font-size: 15px; font-weight: 800;
+  }
+  .callout-privacy p {
+    margin: 6px 0; color: #064e3b; font-size: 13px; line-height: 1.6;
+  }
+  .callout-privacy strong { color: #047857; }
+
+  .callout-tip {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin: 12px 0;
+    font-size: 12px; line-height: 1.55;
+    color: #78350f;
+  }
+  .callout-tip strong { color: #92400e; }
+
+  .flow-cards {
+    display: grid; gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 12px;
+  }
+  .flow-card {
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .flow-card-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--text-strong); }
+  .flow-card-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* PWA 설치 버튼 — beforeinstallprompt 발생 시 + standalone 모드 아닐 때만 표시 */
+  .install-btn {
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px;
+    padding: 7px 12px; font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .install-btn:hover { background: var(--primary-hover); }
+  .install-btn[hidden] { display: none !important; }
+  .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  /* KPI 카드 행 */
+  .kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 24px;
+  }
+  @media (max-width: 700px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .kpi-label {
+    font-size: 11px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .kpi-value {
+    font-size: 20px; font-weight: 700; color: var(--text-strong);
+    margin-top: 4px; font-variant-numeric: tabular-nums;
+  }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .kpi-sub.up { color: var(--up); font-weight: 600; }
+  .kpi-sub.down { color: var(--down); font-weight: 600; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+  /* 가로 스크롤 안전망
+     - html에 overflow를 주면 Android Chrome 일부 버전에서 fixed 자식(.bottom-nav)이
+       containing block을 html로 잡아 fixed 위치가 깨짐 (스크롤 따라 올라옴)
+     - body에 overflow-x: clip 적용 — clip은 스크롤 컨테이너 생성 안 함(본문 스크롤 안전)
+       + fixed의 containing block은 여전히 viewport 유지 */
+  html { max-width: 100vw; }
+  body { overflow-x: clip; }
+  .container { overflow-x: clip; }
+
+  /* 모바일 보강: 패딩 축소, 컨테이너 라운드 줄임, 표 셀 압축 */
+  @media (max-width: 600px) {
+    /* padding-bottom은 탭바 높이 + safe-area를 포함 — shorthand로 덮이지 않게 함께 지정 */
+    body { padding: 12px 8px calc(58px + env(safe-area-inset-bottom)); }
+    .container { padding: 16px 14px; border-radius: 12px; }
+    h1 { font-size: 20px; }
+    .header-row { margin-bottom: 16px; }
+    .kpis { margin-bottom: 16px; gap: 8px; }
+    .kpi { padding: 10px 12px; }
+    .kpi-value { font-size: 17px; }
+    .panel { padding: 14px 12px; }
+    th, td { padding: 6px 4px; font-size: 12px; }
+    .btn { padding: 7px 10px; font-size: 12px; }
+
+    /* 모바일 표: 시장(2)·현재가(5)·액션(7) 컬럼 숨김 — 편집은 모달에서 */
+    table th:nth-child(2), table th:nth-child(5), table th:nth-child(7),
+    tbody td:nth-child(2), tbody td:nth-child(5), tbody td:nth-child(7) {
+      display: none !important;
+    }
+    /* table-wrap/table은 viewport 안에 강제 */
+    .table-wrap { width: 100% !important; max-width: 100% !important; overflow-x: hidden !important; }
+    table { table-layout: fixed !important; width: 100% !important; max-width: 100% !important; }
+    /* 컬럼 폭 — !important 필수 (데스크탑 정의가 CSS 순서상 *뒤*에 있어 cascade에서 이김) */
+    .qty-cell    { width: 52px !important; }
+    .price-cell  { width: 76px !important; }
+    .return-cell { width: 62px !important; }
+    /* ticker(first-child) — fixed layout에서 남는 폭 차지 + 최소 90px 보장 */
+    thead th:first-child, tbody td:first-child {
+      width: auto !important; min-width: 90px !important;
+    }
+    /* ticker 안 콘텐츠 ellipsis (좁은 컬럼에 회사명 12자 cut도 깔끔히 잘림) */
+    td .ticker-display, td .ticker-name {
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+    }
+    /* 모바일 표 셀 패딩 축소 + 글자 컴팩트 */
+    table th, table td { padding: 6px 3px !important; font-size: 11px !important; }
+    .return-cell { font-size: 11px !important; }
+    /* 행 탭 = 모달 편집 진입을 시각적으로 암시 */
+    tbody tr { cursor: pointer; }
+    tbody tr:active { background: #eff6ff; }
+
+    /* 도넛 폭 강제 100% — width=400 속성 무력화 */
+    svg#chart { width: 100% !important; height: auto !important; max-width: 360px; }
+    .chart-wrap { width: 100%; }
+    /* 모바일 레전드 — 시장·통화 셀 숨김, ticker/수익률 한 줄, 우측 평가금액·비율 */
+    .legend-item {
+      align-items: center !important;
+      gap: 8px; padding: 8px 4px;
+    }
+    .legend-market { display: none !important; }
+    /* 티커는 자기 자연 폭 — 잘리지 않음 */
+    .legend-name {
+      flex: 0 0 auto !important; min-width: 0;
+      font-size: 13px; font-weight: 700; color: var(--text-strong);
+      white-space: nowrap; overflow: visible; text-overflow: clip;
+    }
+    .legend-return {
+      flex: 1 1 auto !important; min-width: 0;
+      font-size: 11px; font-weight: 700;
+      text-align: left; padding-left: 4px;
+    }
+    .legend-amt {
+      flex-basis: auto !important; min-width: 0;
+      font-size: 11px; margin-left: 0;
+      text-align: right; white-space: nowrap;
+    }
+    .legend-pct {
+      flex-basis: 44px !important; min-width: 42px;
+      font-size: 12px; margin-left: 6px;
+      text-align: right; font-weight: 700;
+    }
+
+    /* 모바일 KPI도 더 컴팩트 */
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .kpi-value { font-size: 16px; }
+    .kpi-label { font-size: 10px; }
+    .kpi-sub { font-size: 11px; }
+  }
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+    /* grid item은 기본 min-width:auto 라서 자식(table) 콘텐츠 폭에 따라 늘어남. 0으로 강제해야 압축 가능 */
+    min-width: 0;
+    max-width: 100%;
+  }
+  .panel h2 {
+    font-size: 14px; color: var(--text-strong); margin: 0 0 14px;
+    font-weight: 700; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2::before {
+    content: ''; display: inline-block; width: 3px; height: 14px;
+    background: var(--primary); border-radius: 2px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    padding: 8px 6px; text-align: left; font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  th {
+    background: transparent; color: var(--muted); font-weight: 600;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    padding-top: 0; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  th.price-cell, th.return-cell { text-align: right; }
+  th.qty-cell { text-align: right; }
+
+  /* 정렬 가능한 헤더 */
+  th.sortable {
+    cursor: pointer; user-select: none;
+    transition: color 0.15s;
+  }
+  th.sortable:hover { color: var(--text-strong); }
+  th.sortable .sort-ind {
+    display: inline-block; margin-left: 4px; color: var(--border-strong);
+    font-size: 9px; vertical-align: middle;
+  }
+  th.sortable.sort-asc .sort-ind::before { content: '▲'; color: var(--primary); }
+  th.sortable.sort-desc .sort-ind::before { content: '▼'; color: var(--primary); }
+  th.sortable:not(.sort-asc):not(.sort-desc) .sort-ind::before { content: '↕'; }
+
+  /* 레전드 정렬 토글 */
+  .legend-sort {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-top: 18px; padding: 6px 0;
+    align-items: center; font-size: 11px; color: var(--muted);
+  }
+  .legend-sort-label { font-weight: 600; margin-right: 4px; }
+  .legend-sort-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 8px;
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .legend-sort-btn:hover { color: var(--text-strong); border-color: var(--border-strong); }
+  .legend-sort-btn.active {
+    background: var(--primary); color: white; border-color: var(--primary);
+  }
+  .legend-sort-btn .dir-ind {
+    margin-left: 3px; font-size: 9px; opacity: 0.85;
+  }
+
+  /* SVG 도넛 툴팁 */
+  #chart path { cursor: pointer; transition: filter 0.15s; }
+  #chart path:hover { filter: brightness(1.1) drop-shadow(0 2px 6px rgba(0,0,0,0.15)); }
+  .chart-tooltip {
+    position: fixed; pointer-events: none; z-index: 100;
+    background: rgba(15, 23, 42, 0.95); color: white;
+    padding: 10px 14px; border-radius: 8px;
+    font-size: 12px; line-height: 1.5;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    transform: translate(-50%, calc(-100% - 12px));
+    transition: opacity 0.1s;
+    min-width: 160px; max-width: 240px;
+  }
+  .chart-tooltip[hidden] { display: none; }
+  .chart-tooltip .tt-ticker { font-weight: 700; font-size: 13px; letter-spacing: 0.02em; }
+  .chart-tooltip .tt-name { font-size: 11px; opacity: 0.7; font-weight: 400; margin-bottom: 6px; }
+  .chart-tooltip .tt-row { display: flex; justify-content: space-between; gap: 12px; }
+  .chart-tooltip .tt-row .tt-label { opacity: 0.7; }
+  .chart-tooltip .tt-row .tt-val { font-variant-numeric: tabular-nums; }
+  .chart-tooltip .tt-up { color: #fca5a5; }
+  .chart-tooltip .tt-down { color: #93c5fd; }
+  tbody tr:hover { background: #fafbfd; }
+  input, select {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--border-strong);
+    border-radius: 6px; font-size: 13px; font-family: inherit;
+    background: white; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  input[type="number"] { text-align: right; }
+  /* 통일된 커스텀 화살표 — 기본 화살표가 텍스트와 겹치는 문제 해결 */
+  select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding-right: 24px; cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M3 4.5l3 3 3-3' stroke='%236b7280' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 10px 10px;
+  }
+  .ticker-input { font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
+  .ticker-display { text-transform: uppercase; }
+  .btn {
+    padding: 8px 14px; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-add { background: var(--primary); color: white; }
+  .btn-add:hover { background: var(--primary-hover); }
+  .btn-del {
+    background: transparent; color: var(--danger); padding: 4px 8px;
+    font-size: 16px; line-height: 1; border-radius: 6px;
+  }
+  .btn-del:hover { background: #fef2f2; transform: none; }
+  .btn-draw { background: var(--success); color: white; }
+  .btn-draw:hover { background: #059669; }
+  .btn-export, .btn-import, .btn-reset {
+    background: white; color: var(--muted); border: 1px solid var(--border-strong);
+    font-weight: 500;
+  }
+  .btn-export:hover, .btn-import:hover, .btn-reset:hover {
+    background: #f9fafb; color: var(--text-strong);
+  }
+  .btn-fetch { background: var(--accent); color: white; }
+  .btn-fetch:hover { background: #0284c7; }
+  .btn-fetch:disabled {
+    background: #cbd5e1; cursor: not-allowed; transform: none;
+  }
+  .btn-row {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+  }
+  .btn-row .spacer { flex: 1; }
+
+  .chart-wrap { display: flex; flex-direction: column; align-items: center; }
+  svg { display: block; max-width: 100%; height: auto; }
+  .tabs {
+    display: inline-flex; gap: 4px; margin-bottom: 14px;
+    background: #f1f3f7; padding: 4px; border-radius: 8px;
+  }
+  .tab {
+    background: transparent; border: none; padding: 6px 14px; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    border-radius: 6px; transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text-strong); }
+  .tab.active {
+    background: var(--surface); color: var(--primary);
+    box-shadow: var(--shadow-sm);
+  }
+  .legend { margin-top: 18px; width: 100%; }
+  .legend-item {
+    display: flex; align-items: center; padding: 8px 4px;
+    font-size: 13px; border-bottom: 1px solid var(--border);
+  }
+  .legend-item:last-child { border-bottom: none; }
+  .legend-color {
+    width: 12px; height: 12px; border-radius: 3px;
+    margin-right: 10px; flex-shrink: 0;
+  }
+  /* 데스크탑 레전드 — 평탄한 셀 컬럼 정렬. panel 좁으므로 폭 컴팩트 */
+  .legend-item { gap: 6px; }
+  .legend-name {
+    flex: 1 1 auto; min-width: 60px;
+    font-size: 13px; font-weight: 700; color: var(--text-strong);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .legend-market {
+    flex: 0 0 100px;
+    font-size: 11px; color: var(--muted);
+    white-space: nowrap;
+  }
+  .legend-return {
+    flex: 0 0 64px;
+    font-size: 12px; font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .legend-return.up { color: var(--up); }
+  .legend-return.down { color: var(--down); }
+  .legend-amt {
+    flex: 0 0 100px;
+    color: var(--muted); font-size: 11px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .legend-pct {
+    flex: 0 0 44px;
+    font-weight: 700; color: var(--text-strong);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .currency-cell { width: 68px; } /* 구버전 호환용 */
+  .market-cell { width: 110px; }
+  /* 편집 모드 input은 셀 폭을 꽉 채우되 padding 좁혀 숫자가 잘 보이게 */
+  td .cell-edit[type="number"] { padding: 6px 6px; min-width: 0; }
+
+  /* 표 안 input/select는 데이터 보관용으로만 — 항상 숨김. 편집은 모달에서 */
+  .cell-edit { display: none !important; }
+  .cell-display {
+    display: block; padding: 6px 4px; font-size: 13px;
+    font-variant-numeric: tabular-nums; min-height: 28px;
+    line-height: 1.4;
+  }
+  .ticker-display { font-weight: 600; color: var(--text-strong); letter-spacing: 0.02em; }
+  .ticker-name {
+    display: block; font-size: 11px; color: var(--muted);
+    font-weight: 400; letter-spacing: 0; text-transform: none;
+    margin-top: 2px; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .ticker-name:empty { display: none; }
+  tr.editing .ticker-name { display: none; }
+  .market-display { color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .qty-display, .buy-display { text-align: right; color: var(--text); }
+  .ticker-display.empty, .qty-display.empty, .buy-display.empty {
+    color: #cbd5e1; font-weight: 400;
+  }
+
+  /* 편집 버튼 — 모달 트리거 */
+  .btn-edit {
+    background: transparent; padding: 4px 6px; font-size: 14px;
+    line-height: 1; border-radius: 6px; color: var(--muted);
+    border: 1px solid transparent; transform: none;
+  }
+  .btn-edit:hover {
+    background: #eef2ff; color: var(--primary); transform: none;
+  }
+  /* btn-save는 사용 안 함 (모달의 "저장" 버튼이 대체) */
+  .btn-save { display: none !important; }
+  .actions-cell { width: 64px; text-align: right; white-space: nowrap; }
+  .actions-cell .btn { padding: 4px 7px; margin: 0; }
+
+  /* ===== 편집 모달 ===== */
+  .modal[hidden] { display: none !important; }
+  .modal {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: modal-fade-in 0.15s ease-out;
+  }
+  @keyframes modal-fade-in { from { opacity: 0 } to { opacity: 1 } }
+  .modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+  }
+  .modal-card {
+    position: relative;
+    background: var(--surface); border-radius: 14px;
+    width: 100%; max-width: 440px;
+    padding: 22px 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    animation: modal-slide-in 0.18s ease-out;
+  }
+  @keyframes modal-slide-in {
+    from { transform: translateY(8px); opacity: 0 }
+    to   { transform: translateY(0); opacity: 1 }
+  }
+  .modal-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-head h3 {
+    margin: 0; font-size: 16px; color: var(--text-strong);
+    font-weight: 700; letter-spacing: -0.01em;
+  }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 22px; color: var(--muted); padding: 0 6px;
+    line-height: 1;
+  }
+  .modal-close:hover { color: var(--text-strong); }
+  .modal-body { display: flex; flex-direction: column; gap: 4px; }
+  .modal-field {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .modal-field:last-child { border-bottom: none; }
+  .modal-field label {
+    min-width: 72px;
+    color: var(--muted);
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .modal-field input, .modal-field select {
+    flex: 1; min-width: 0;
+  }
+  .modal-readonly {
+    flex: 1; text-align: right;
+    font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--text-strong);
+  }
+  .modal-readonly-muted { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .modal-actions {
+    display: flex; gap: 8px; align-items: center;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-del-modal {
+    background: white; color: var(--danger);
+    border: 1px solid var(--border-strong);
+    font-weight: 500;
+  }
+  .btn-del-modal:hover {
+    background: #fef2f2; border-color: var(--danger);
+  }
+  .qty-cell { width: 116px; }
+  .price-cell { width: 136px; text-align: right; }
+  .return-cell {
+    width: 78px; text-align: right; font-size: 12px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .return-cell.up { color: var(--up); }
+  .return-cell.down { color: var(--down); }
+  .current-price {
+    width: 92px; text-align: right; font-size: 13px;
+    color: var(--text-strong); font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .current-price.stale { color: #94a3b8; }
+  .current-price.stale::after { content: ' ⚠'; font-size: 10px; }
+  .actions-cell { width: 34px; text-align: center; }
+  .table-wrap { overflow-x: auto; }
+
+  #file-input { display: none; }
+  .fx-section {
+    margin-top: 16px; padding: 12px 14px;
+    background: #f9fafb; border: 1px solid var(--border);
+    border-radius: 10px; font-size: 12px;
+    overflow: hidden; /* 자식이 폭 초과해도 패널 밖으로 안 나감 */
+  }
+  .fx-section summary {
+    cursor: pointer; color: var(--text);
+    font-weight: 600; user-select: none;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .fx-section-note {
+    margin: 10px 0 4px; font-size: 11px; color: var(--muted);
+  }
+  .fx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 6px; margin-top: 8px;
+  }
+  .fx-row {
+    display: flex; align-items: baseline; gap: 4px;
+    padding: 7px 10px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    min-width: 0;
+  }
+  .fx-row .fx-cur {
+    color: var(--muted); font-weight: 700;
+    font-size: 10px; letter-spacing: 0.04em;
+  }
+  .fx-row .fx-val {
+    color: var(--text-strong); font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+  .fx-row .fx-unit { color: var(--muted); font-size: 10px; }
+  /* 합산 종목: 펼침 토글 / 계좌 배지 / 매수내역 하위행 */
+  .row-toggle { display:inline-block; width:1em; color:#64748b; font-size:.8em; cursor:pointer; }
+  .lot-badge { display:inline-block; margin-left:6px; padding:1px 6px; font-size:11px; font-weight:700;
+    color:#2563eb; background:#dbeafe; border-radius:9px; vertical-align:middle; }
+  tr.holding-row { cursor:pointer; }
+  tr.lot-row { background:#f8fafc; }
+  tr.lot-row td { color:#475569; font-size:.92em; }
+  .lot-account { color:#334155; font-weight:600; }
+  .modal-field .opt { color:#94a3b8; font-weight:400; font-size:.85em; }
