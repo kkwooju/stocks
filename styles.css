@@ -429,9 +429,13 @@
     }
     /* ticker 안 콘텐츠 ellipsis (좁은 컬럼에 회사명 12자 cut도 깔끔히 잘림) — 좌측 정렬 */
     td .ticker-display, td .ticker-name {
-      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       text-align: left;
     }
+    /* 티커 + 2계좌 배지는 한 줄(첫 줄), 회사명만 다음 줄 */
+    td .ticker-display { display: inline-block; vertical-align: middle; max-width: calc(100% - 48px); }
+    td .lot-badge { vertical-align: middle; }
+    td .ticker-name { display: block; }
     /* 모바일 표 셀: 행 높이 확보(터치 영역) + 가운데 정렬 유지 */
     table th, table td { padding: 11px 4px !important; font-size: 12px !important; text-align: center !important; }
     table th { padding-top: 13px !important; padding-bottom: 13px !important; }
