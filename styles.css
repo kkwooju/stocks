@@ -143,6 +143,7 @@
     color: var(--muted); font-size: 10px; font-weight: 600;
     transition: color 0.15s;
     min-width: 0;
+    margin-top: 10px; /* 홈·사용방법·앱설치만 10px 아래로 — 가운데 FAB(+)은 .nav-fab라 영향 없음 */
   }
   .bottom-nav .nav-btn .ico { width: 18px; height: 18px; }
   .bottom-nav .nav-btn.active { color: var(--primary); }
