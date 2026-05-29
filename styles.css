@@ -432,10 +432,12 @@
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       text-align: left;
     }
-    /* 티커 + 2계좌 배지는 한 줄(첫 줄), 회사명만 다음 줄 */
-    td .ticker-display { display: inline-block; vertical-align: middle; max-width: calc(100% - 48px); }
+    /* 티커 + 2계좌 배지는 한 줄(첫 줄), 회사명만 다음 줄.
+       td 기본 white-space:normal이 inline-block 사이 공백에서 줄바꿈 → nowrap으로 첫 줄 고정 */
+    tbody td:first-child { white-space: nowrap; }
+    td .ticker-display { display: inline-block; vertical-align: middle; max-width: 100%; }
     td .lot-badge { vertical-align: middle; }
-    td .ticker-name { display: block; }
+    td .ticker-name { display: block; }   /* block이라 자동으로 둘째 줄 */
     /* 모바일 표 셀: 행 높이 확보(터치 영역) + 가운데 정렬 유지 */
     table th, table td { padding: 11px 4px !important; font-size: 12px !important; text-align: center !important; }
     table th { padding-top: 13px !important; padding-bottom: 13px !important; }
