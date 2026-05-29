@@ -496,30 +496,33 @@
   th, td {
     padding: 8px 6px; text-align: left; font-size: 13px;
     border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);   /* 세로 구분선 — 셀 구역 구분 */
     font-variant-numeric: tabular-nums;
   }
+  th:last-child, td:last-child { border-right: none; }  /* 마지막 열(액션) 우측선 제거 */
   th {
-    background: transparent; color: var(--muted); font-weight: 600;
+    background: var(--bg-soft, #f8fafc); color: var(--muted); font-weight: 700;
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
-    padding-top: 0; padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-strong);
+    padding-top: 8px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border-strong);
   }
   th.price-cell, th.return-cell { text-align: right; }
   th.qty-cell { text-align: right; }
 
-  /* 정렬 가능한 헤더 */
+  /* 정렬 가능한 헤더 — 클릭 가능함을 시각적으로 강조 */
   th.sortable {
     cursor: pointer; user-select: none;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
   }
-  th.sortable:hover { color: var(--text-strong); }
+  th.sortable:hover { color: var(--primary); background: #eef2ff; }
+  th.sortable.sort-asc, th.sortable.sort-desc { color: var(--primary); }
   th.sortable .sort-ind {
-    display: inline-block; margin-left: 4px; color: var(--border-strong);
-    font-size: 9px; vertical-align: middle;
+    display: inline-block; margin-left: 4px; color: var(--muted);
+    font-size: 11px; vertical-align: middle;
   }
   th.sortable.sort-asc .sort-ind::before { content: '▲'; color: var(--primary); }
   th.sortable.sort-desc .sort-ind::before { content: '▼'; color: var(--primary); }
-  th.sortable:not(.sort-asc):not(.sort-desc) .sort-ind::before { content: '↕'; }
+  th.sortable:not(.sort-asc):not(.sort-desc) .sort-ind::before { content: '↕'; opacity: 0.6; }
 
   /* 레전드 정렬 토글 */
   .legend-sort {
