@@ -50,6 +50,13 @@ python -m http.server 8765
 
 ```js
 // ========== 데이터 모델: holding = {ticker, market, name, currentPrice, lots:[{account,qty,buyPrice}]} ==========
+// innerHTML 주입 전 사용자/외부 입력(티커·회사명·계좌명) 이스케이프 — self-XSS 방지
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // 합산 식별 키 — 같은 티커+시장이면 한 종목
 function holdingKey(ticker, market) {
   return String(ticker || '').trim().toUpperCase() + '|' + (market || 'US');
@@ -250,9 +257,9 @@ function renderTable() {
     tr.innerHTML = `
       <td data-label="티커">
         <span class="row-toggle">${multi ? (expanded ? '▾' : '▸') : ''}</span>
-        <span class="ticker-display">${h.ticker}</span>
+        <span class="ticker-display">${escapeHtml(h.ticker)}</span>
         ${multi ? `<span class="lot-badge">${h.lots.length}계좌</span>` : ''}
-        <span class="ticker-name">${formatTickerName(h.name)}</span>
+        <span class="ticker-name">${escapeHtml(formatTickerName(h.name))}</span>
       </td>
       <td data-label="시장"><span class="market-display">${mi.flag} ${mi.short}</span></td>
       <td data-label="수량">${h.qty > 0 ? h.qty.toLocaleString('ko-KR') : '-'}</td>
@@ -275,7 +282,7 @@ function renderTable() {
         lr.className = 'lot-row';
         lr.dataset.key = h.key; lr.dataset.lot = idx;
         lr.innerHTML = `
-          <td data-label="계좌"><span class="lot-account">└ ${l.account || ('내역 ' + (idx + 1))}</span></td>
+          <td data-label="계좌"><span class="lot-account">└ ${escapeHtml(l.account || ('내역 ' + (idx + 1)))}</span></td>
           <td data-label="시장"></td>
           <td data-label="수량">${lq > 0 ? lq.toLocaleString('ko-KR') : '-'}</td>
           <td data-label="매수가">${formatPrice(lp)}</td>
@@ -798,4 +805,5 @@ git commit -m "docs: 동일 종목 합산(계좌별 내역) 사용법 추가"
 - **스펙 커버리지**: 합산(Task1 aggregate, Task3 upsertLot) / 가중평균(aggregateHolding) / 계좌 보존·펼침(Task2 renderTable, Task3 상호작용) / 계좌명 선택입력(모달 m-account, 폴백 라벨) / 저장 시 자동 합산(saveModal+upsertLot) / 로드 시 중복정리(normalizeHoldings) / 마이그레이션(Task4) / 차트·KPI 유지(readHoldings 형태 보존) — 모두 태스크에 매핑됨.
 - **플레이스홀더**: 없음. 모든 코드 블록은 실제 구현.
 - **타입/명칭 일관성**: `holdingKey`/`aggregateHolding`/`normalizeHoldings`/`upsertLot`/`renderTable`/`openLotModal`/`saveModal`/`closeEditModal`/`deleteFromModal`/`toggleExpand`/`deleteHolding`/`deleteLot`/`holdingSortValue`/`updateModalReturnPreview`/`HOLDINGS`/`expandedKeys`/`modalCtx` — 정의와 호출 명칭 일치 확인. 제거 대상(`addRow`,`syncDisplay`,`updateReturns`,`rowSortValue`,`removeRow`,`modalRowId`,`modalIsNew`,`startEdit`,`endEdit`)은 Task3 Step6 grep으로 잔존 0건 확인.
+- **보안(XSS)**: `renderTable()`이 `innerHTML`로 그리므로 사용자/외부 입력인 티커·회사명·계좌명은 `escapeHtml()`로 감싼다(Task1에 헬퍼 추가, Task2 renderTable에서 적용). 데이터는 로컬 전용이라 영향은 self-XSS 수준이지만, 악성 JSON import 대비. 모달 input은 `.value`(textContent 경로)라 안전. 차트 레전드(`drawChart`)도 동일 패턴이나 이번 범위 밖 — 기존 코드 유지.
 - **주의**: `onclick="installPWA()"` 등 HTML 인라인 핸들러로 호출되는 함수(`saveModal`,`closeEditModal`,`deleteFromModal`,`addRowAndOpenModal`,`resetData`,`exportJSON`,`importJSON`,`toggleTableSort`,`toggleLegendSort`,`setChartBasis`)는 이름을 유지했다. 표 액션 버튼은 인라인 onclick 대신 위임 핸들러로 처리(동적 행이라 위임이 안전).
