@@ -174,11 +174,12 @@ function formatPrice(v) {
   return n.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
 }
 
-// 모바일에서 회사명 12자 초과 시 말줄임 — 데스크탑은 원본 표시
+// 회사명 말줄임 — 모바일 20자, 데스크탑 40자 초과 시 … 처리
 function formatTickerName(name) {
   if (!name) return '';
-  if (matchMedia('(max-width: 600px)').matches && name.length > 20) {
-    return name.substring(0, 20) + '…';
+  const limit = matchMedia('(max-width: 600px)').matches ? 20 : 40;
+  if (name.length > limit) {
+    return name.substring(0, limit) + '…';
   }
   return name;
 }
