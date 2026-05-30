@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kkwooju.github.io/stocks/sitemap.xml
