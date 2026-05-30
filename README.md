@@ -169,6 +169,34 @@
 
 ---
 
+## 🗂 프로젝트 구조 (개발자용)
+
+빌드 도구·번들러 없이 동작하는 순수 정적 사이트입니다. `portfolio.html`을 브라우저로 열기만 하면 됩니다.
+
+```
+portfolio.html          진입점 (HTML 마크업·모달·하단 탭바)
+css/
+  └─ styles.css         전체 스타일 (데스크탑·모바일 반응형)
+js/
+  ├─ model.js           시장 정의·통화·수익률/평가금액 계산 로직
+  ├─ storage.js         localStorage 저장 + 파일 저장/불러오기/연결
+  ├─ table.js           보유 종목 표·계좌별 합산 렌더
+  ├─ chart.js           도넛 차트·레전드 SVG 렌더
+  ├─ prices.js          Yahoo Finance 현재가·환율 fetch
+  ├─ platform.js        PWA·서비스워커 등록·인앱브라우저 감지·런처 연동
+  └─ main.js            초기화·부트스트랩 (스크립트 로드 순서상 마지막)
+sw.js                   서비스 워커 (PWA 설치용) — ⚠ 반드시 루트 유지
+manifest.json           PWA 매니페스트 — 루트 유지
+icon.svg                앱 아이콘 (manifest·HTML에서 참조) — 루트 유지
+portfolio_data.json     시연용 기본 데이터
+```
+
+> **⚠ 루트 유지 주의**: `sw.js`는 자기 위치 경로(scope) 안의 페이지만 제어할 수 있어, `js/`로 옮기면 `portfolio.html`을 제어하지 못해 **PWA 설치가 깨집니다**. `manifest.json`·`icon.svg`·`portfolio_data.json`도 페이지 기준 상대경로로 참조되므로 루트에 둡니다.
+
+스크립트는 `portfolio.html` 하단에서 `model → storage → table → chart → prices → platform → main` 순서로 로드됩니다 (전역 함수 의존 순서).
+
+---
+
 ## 무료 / 광고 없음 / 추적 없음
 
 - 별도 회원가입 불필요
