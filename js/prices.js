@@ -1,9 +1,11 @@
 // ========== 가격 자동 조회 (Yahoo Finance via CORS proxy) ==========
 // 한국 ETF는 .KS(KOSPI)/.KQ(KOSDAQ), 미국은 그냥 티커, 홍콩 .HK, 일본 .T, 유럽 .L/.PA/.AS
 // 공개 프록시들이 가끔 다운되므로 다중 fallback. 한 개 죽어도 다음으로 자동 전환.
+// 순서 = 안정성 순(라이브 측정 기준). 0·1번이 reliable, 2번은 평상시용 보조.
+// ※ allorigins.win은 부하 시 CORS 헤더 누락으로 상시 실패 → cors.lol로 교체(2026-05 검증).
 const PROXIES = [
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  url => `https://api.cors.lol/?url=${encodeURIComponent(url)}`,
   url => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`
 ];
 
@@ -37,8 +39,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // 종목/환율 모두 동일한 Yahoo chart 엔드포인트 → 프록시 순회 + 데이터 추출을 공유 헬퍼로 통합.
 // 프록시 3개를 한 바퀴 돌고도 실패하면 지수 백오프로 재시도한다.
 // 특히 429(Too Many Requests)는 "잠깐 쉬면 풀리는" 일시적 차단이므로 재시도가 효과적.
-const FETCH_MAX_RETRIES = 3;   // 프록시 한 바퀴(3개) 실패 후 최대 재시도 횟수
-const FETCH_BASE_DELAY = 800;  // 첫 재시도 대기(ms). 매 회 2배 (800 → 1600 → 3200)
+const FETCH_MAX_RETRIES = 5;     // 프록시 한 바퀴 실패 후 최대 재시도 횟수 (대량 종목 대비 상향)
+const FETCH_BASE_DELAY = 800;    // 첫 재시도 대기(ms). 매 회 2배 (800 → 1600 → 3200 → 5000…)
+const FETCH_MAX_DELAY = 5000;    // 백오프 상한 — 마지막 회차가 과도하게 길어지지 않도록 캡
 async function fetchYahooMeta(symbol, label) {
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
   let lastErr;
@@ -62,7 +65,7 @@ async function fetchYahooMeta(symbol, label) {
     }
     // 프록시 한 바퀴 전부 실패. 재시도 여력이 남았으면 백오프 후 다시 시도.
     if (attempt < FETCH_MAX_RETRIES) {
-      const delay = FETCH_BASE_DELAY * Math.pow(2, attempt);
+      const delay = Math.min(FETCH_BASE_DELAY * Math.pow(2, attempt), FETCH_MAX_DELAY);
       if (rateLimited) console.warn(`[${label}] 429 감지 → ${delay}ms 대기 후 재시도 (${attempt + 1}/${FETCH_MAX_RETRIES})`);
       await sleep(delay);
     }
