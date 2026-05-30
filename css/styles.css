@@ -702,19 +702,19 @@
     margin-right: 10px; flex-shrink: 0;
   }
   /* 데스크탑 레전드 — 평탄한 셀 컬럼 정렬. panel 좁으므로 폭 컴팩트 */
-  .legend-item { gap: 6px; }
+  .legend-item { gap: 4px; }
   .legend-name {
     flex: 1 1 auto; min-width: 60px;
     font-size: 13px; font-weight: 700; color: var(--text-strong);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .legend-market {
-    flex: 0 0 100px;
+    flex: 0 0 58px;
     font-size: 11px; color: var(--muted);
-    white-space: nowrap;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .legend-return {
-    flex: 0 0 64px;
+    flex: 0 0 60px;
     font-size: 12px; font-weight: 700;
     text-align: right;
     font-variant-numeric: tabular-nums;
@@ -722,14 +722,14 @@
   .legend-return.up { color: var(--up); }
   .legend-return.down { color: var(--down); }
   .legend-amt {
-    flex: 0 0 100px;
+    flex: 0 0 88px;
     color: var(--muted); font-size: 11px;
     text-align: right;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
   .legend-pct {
-    flex: 0 0 44px;
+    flex: 0 0 42px;
     font-weight: 700; color: var(--text-strong);
     text-align: right;
     font-variant-numeric: tabular-nums;

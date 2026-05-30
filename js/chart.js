@@ -213,7 +213,7 @@ function drawChart() {
     item.innerHTML = `
       <div class="legend-color" style="background:${color}"></div>
       <div class="legend-name">${escapeHtml(h.tickerFull || h.ticker)}</div>
-      <div class="legend-market">${mInfo.flag} ${mInfo.short} · ${h.currency}</div>
+      <div class="legend-market">${mInfo.flag} ${mInfo.short}</div>
       <div class="legend-return ${retCls}">${retText}</div>
       <div class="legend-amt">₩${h[amountKey].toLocaleString('ko-KR',{maximumFractionDigits:0})}</div>
       <div class="legend-pct">${(pct*100).toFixed(1)}%</div>
