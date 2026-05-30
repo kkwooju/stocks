@@ -385,10 +385,47 @@
 
   .grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
     gap: 24px;
   }
-  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+  /* 2열은 표(7열)가 잘리지 않는 폭에서만 — 그 아래는 1열 스택 */
+  @media (max-width: 1210px) { .grid { grid-template-columns: 1fr; } }
+  /* 태블릿·좁은 데스크탑(601–1150px) 스택 구간:
+     - 표: max-width로 티커 열 과확장(휑함) 방지
+     - 차트: 도넛+레전드 블록 크기 제한 + 중앙 정렬
+     - 셀 패딩 축소로 7열이 좁은 폭에도 들어가게 */
+  @media (min-width: 601px) and (max-width: 1210px) {
+    .panel table { max-width: 880px; }
+    .chart-wrap { max-width: 480px; margin-left: auto; margin-right: auto; }
+    table th, table td { padding: 12px 6px; }
+  }
+  /* 넓은 스택 구간(821–1150px): 표 폭에 여유가 있어 데이터 열을 넉넉히 줘
+     티커 열이 남는 공간을 과하게 흡수(휑함)하지 않도록 함 */
+  @media (min-width: 821px) and (max-width: 1210px) {
+    .table-wrap .market-cell  { width: 112px; }
+    .table-wrap .qty-cell     { width: 96px; }
+    .table-wrap .price-cell   { width: 140px; }
+    .table-wrap .return-cell  { width: 104px; }
+    .table-wrap .actions-cell { width: 72px; }
+  }
+  /* 좁은 구간(601–820px): 7열 + 액션 버튼(+/✕)이 패널을 넘지 않도록 고정 레이아웃.
+     auto 레이아웃은 긴 회사명이 티커 열을 강제로 넓혀(측정상 243px) 표가 패널을 넘침.
+     table-layout:fixed로 선언 폭을 강제하고 티커 열은 남는 폭만 차지(회사명 ellipsis). */
+  @media (min-width: 601px) and (max-width: 820px) {
+    /* .table-wrap 접두로 명시도(0,2,0)를 올려 뒤쪽 기본 컬럼 폭(0,1,0)을 확실히 덮음 */
+    .table-wrap { overflow-x: hidden; }
+    .table-wrap table { table-layout: fixed; }
+    .table-wrap th, .table-wrap td { padding: 12px 4px; }
+    .table-wrap .market-cell  { width: 66px; }
+    .table-wrap .qty-cell     { width: 44px; }
+    .table-wrap .price-cell   { width: 72px; }
+    .table-wrap .return-cell  { width: 64px; }
+    .table-wrap .actions-cell { width: 68px; }
+    .table-wrap thead th:first-child, .table-wrap tbody td:first-child { width: auto; }
+    .table-wrap td .ticker-display, .table-wrap td .ticker-name {
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+  }
   /* 가로 스크롤 안전망
      - html에 overflow를 주면 Android Chrome 일부 버전에서 fixed 자식(.bottom-nav)이
        containing block을 html로 잡아 fixed 위치가 깨짐 (스크롤 따라 올라옴)
@@ -504,10 +541,12 @@
   }
   table { width: 100%; border-collapse: collapse; }
   th, td {
-    padding: 13px 10px; text-align: center; vertical-align: middle; font-size: 13px;
+    padding: 13px 8px; text-align: center; vertical-align: middle; font-size: 13px;
     border-bottom: 1px solid var(--border);   /* 가로 구분선만 — 부드러운 행 구분 */
     font-variant-numeric: tabular-nums;
   }
+  /* 티커 열(종목명 포함)은 좌측 정렬 — 데스크탑·모바일 공통 */
+  thead th:first-child, tbody td:first-child { text-align: left; }
   /* 헤더: 충분한 높이 + 은은한 배경으로 표 상단 강조 */
   th {
     background: var(--bg-soft, #f8fafc); color: var(--muted); font-weight: 700;
@@ -697,7 +736,7 @@
   }
 
   .currency-cell { width: 68px; } /* 구버전 호환용 */
-  .market-cell { width: 110px; }
+  .market-cell { width: 96px; }
   /* 편집 모드 input은 셀 폭을 꽉 채우되 padding 좁혀 숫자가 잘 보이게 */
   td .cell-edit[type="number"] { padding: 6px 6px; min-width: 0; }
 
@@ -817,10 +856,10 @@
   .btn-del-modal:hover {
     background: #fef2f2; border-color: var(--danger);
   }
-  .qty-cell { width: 116px; }
-  .price-cell { width: 136px; }
+  .qty-cell { width: 80px; }
+  .price-cell { width: 104px; }
   .return-cell {
-    width: 86px; font-size: 13px; font-weight: 700;
+    width: 78px; font-size: 13px; font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
   .return-cell.up { color: var(--up); }
